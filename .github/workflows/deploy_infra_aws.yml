@@ -32,6 +32,10 @@ jobs:
             --parameter-overrides \
               SnowpipeAirQualitySQSArn=${{ secrets.SNOWPIPE_AIR_QUALITY_SQS_ARN }} \
               SnowpipeCoordonneesSQSArn=${{ secrets.SNOWPIPE_COORDONNEES_SQS_ARN }} \
+              SnowpipeTraficVeloSQSArn=${{ secrets.SNOWPIPE_TRAFIC_VELO_SQS_ARN }} \
+              SnowpipeTraficRoutierSQSArn=${{ secrets.SNOWPIPE_TRAFIC_ROUTIER_SQS_ARN }} \
+              SnowpipeVelibRealtimeSQSArn=${{ secrets.SNOWPIPE_VELIB_REALTIME_SQS_ARN }} \
+              SnowpipeStationsVelibSQSArn=${{ secrets.SNOWPIPE_STATIONS_VELIB_SQS_ARN }} \
             --no-fail-on-empty-changeset
 
       # --- IAM Role ---
