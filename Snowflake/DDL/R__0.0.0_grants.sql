@@ -1,7 +1,5 @@
--- Grants complets NovaSight — fichier unique, exécuté par GITHUB_USER (SECURITYADMIN = MANAGE GRANTS)
--- Remplace R__1.1.8_grants_bronze.sql et R__2.1.2_grants_mobilite.sql
-
-USE ROLE SECURITYADMIN;
+-- Grants complets NovaSight — exécuté par GITHUB_ROLE (hérite SECURITYADMIN = MANAGE GRANTS)
+-- SYSADMIN conserve ses droits naturels sur BRONZE/SILVER (pas de REVOKE dans le transfert ownership)
 
 -- ══════════════════════════════════════════════════════════════════════
 -- BRONZE  →  DATA_ENGINEER : lecture complète (tous schémas + futurs)
