@@ -35,17 +35,6 @@ resource "snowflake_grant_account_role" "data_analyst_to_user" {
   user_name = snowflake_user.analyst_user.name
 }
 
-# --- ROLE → GITHUB_ROLE (CI/CD peut switcher vers les rôles opérationnels) ---
-resource "snowflake_grant_account_role" "ingest_role_to_github" {
-  role_name        = snowflake_account_role.ingest_role.name
-  parent_role_name = "GITHUB_ROLE"
-}
-
-resource "snowflake_grant_account_role" "transform_role_to_github" {
-  role_name        = snowflake_account_role.transform_role.name
-  parent_role_name = "GITHUB_ROLE"
-}
-
 # --- INGEST_ROLE : owner de BRONZE ---
 resource "snowflake_grant_ownership" "ingest_role_bronze_owner" {
   depends_on        = [snowflake_database.bronze_db]
@@ -66,10 +55,10 @@ resource "snowflake_grant_ownership" "transform_role_silver_owner" {
   }
 }
 
-# --- SYSADMIN : USAGE + CREATE SCHEMA sur BRONZE + SILVER (pour GITHUB_ROLE via héritage) ---
-resource "snowflake_grant_privileges_to_account_role" "sysadmin_bronze_ddl" {
+# --- GITHUB_ROLE : USAGE + CREATE SCHEMA sur BRONZE + SILVER (DDL CI/CD) ---
+resource "snowflake_grant_privileges_to_account_role" "github_role_bronze_ddl" {
   depends_on        = [snowflake_grant_ownership.ingest_role_bronze_owner]
-  account_role_name = "SYSADMIN"
+  account_role_name = "GITHUB_ROLE"
   privileges        = ["USAGE", "CREATE SCHEMA"]
   on_account_object {
     object_type = "DATABASE"
@@ -77,9 +66,9 @@ resource "snowflake_grant_privileges_to_account_role" "sysadmin_bronze_ddl" {
   }
 }
 
-resource "snowflake_grant_privileges_to_account_role" "sysadmin_silver_ddl" {
+resource "snowflake_grant_privileges_to_account_role" "github_role_silver_ddl" {
   depends_on        = [snowflake_grant_ownership.transform_role_silver_owner]
-  account_role_name = "SYSADMIN"
+  account_role_name = "GITHUB_ROLE"
   privileges        = ["USAGE", "CREATE SCHEMA"]
   on_account_object {
     object_type = "DATABASE"
