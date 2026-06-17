@@ -2,20 +2,10 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "IAM Role pour le pipeline de données (moindre privilège)",
   "Parameters": {
-    "SnowflakeExternalId": {
-      "Type": "String",
-      "Default": "",
-      "Description": "ExternalId Snowflake (DESC INTEGRATION s3_integration → STORAGE_AWS_EXTERNAL_ID)"
-    },
     "SnowflakeAwsUserId": {
       "Type": "String",
       "Default": "arn:aws:iam::332896938820:user/2ect1000-s",
       "Description": "ARN user Snowflake (DESC INTEGRATION s3_integration → STORAGE_AWS_IAM_USER_ARN)"
-    }
-  },
-  "Conditions": {
-    "HasSnowflakeTrust": {
-      "Fn::Not": [{ "Fn::Equals": [{ "Ref": "SnowflakeAwsUserId" }, ""] }]
     }
   },
   "Resources": {
@@ -37,20 +27,9 @@
               "Action": "sts:AssumeRole"
             },
             {
-              "Fn::If": [
-                "HasSnowflakeTrust",
-                {
-                  "Effect": "Allow",
-                  "Principal": { "AWS": { "Ref": "SnowflakeAwsUserId" } },
-                  "Action": "sts:AssumeRole"
-                  // "Condition": {
-                  //   "StringEquals": {
-                  //     "sts:ExternalId": { "Ref": "SnowflakeExternalId" }
-                  //   }
-                  // }
-                },
-                { "Ref": "AWS::NoValue" }
-              ]
+              "Effect": "Allow",
+              "Principal": { "AWS": { "Ref": "SnowflakeAwsUserId" } },
+              "Action": "sts:AssumeRole"
             }
           ]
         },
