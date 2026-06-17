@@ -52,7 +52,8 @@ jobs:
       - name: Zip Lambda extraction
         run: |
           cd infra_aws/lambda_extraction/code
-          zip -r ../../../extraction.zip lambda_function.py
+          pip install requests -t .
+          zip -r ../../../extraction.zip .
 
       - name: Upload extraction zip to S3
         run: aws s3 cp extraction.zip s3://s3-projet-efrei/lambda/extraction.zip

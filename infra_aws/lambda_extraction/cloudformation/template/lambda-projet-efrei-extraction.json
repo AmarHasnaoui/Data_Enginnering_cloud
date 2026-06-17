@@ -17,9 +17,6 @@
         },
         "Timeout": 300,
         "MemorySize": 256,
-        "Layers": [
-          { "Fn::Sub": "arn:aws:lambda:eu-west-3:${AWS::AccountId}:layer:RequestsLayer:2" }
-        ],
         "Environment": {
           "Variables": {
             "BUCKET": "s3-projet-efrei"
