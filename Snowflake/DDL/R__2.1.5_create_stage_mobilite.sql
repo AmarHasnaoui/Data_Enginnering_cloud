@@ -10,7 +10,7 @@ CREATE FILE FORMAT IF NOT EXISTS my_csv_format
   SKIP_HEADER      = 1
   EMPTY_FIELD_AS_NULL = TRUE;
 
-CREATE OR REPLACE STAGE stage_bronze_mobilite
+CREATE STAGE IF NOT EXISTS stage_bronze_mobilite
   URL                 = 's3://s3-projet-efrei/bronze/'
   STORAGE_INTEGRATION = s3_integration
   FILE_FORMAT         = my_csv_format;

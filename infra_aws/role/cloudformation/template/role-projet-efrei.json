@@ -32,7 +32,7 @@
               "Action": "sts:AssumeRole",
               "Condition": {
                 "StringEquals": {
-                  "sts:ExternalId": "RV18665_SFCRole=128_UUeShuy4fDXX+4tHCpS1nE/bP48="
+                  "sts:ExternalId": "RV18665_SFCRole=128_izEGKH89DgerzzYsZkpISvNZA+4="
                 }
               }
             }
