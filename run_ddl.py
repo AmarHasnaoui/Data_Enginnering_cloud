@@ -14,15 +14,15 @@ for file in sorted(glob.glob("Snowflake/DDL/*.sql")):
     print(f"Executing {file}...")
     with open(file, "r") as f:
         sql_content = f.read()
-    # Fichiers ACCOUNTADMIN : déployés manuellement (Storage Integration, Network Rule, Secret Gold)
-    # skip_markers = [
-    #     "CREATE OR REPLACE STORAGE INTEGRATION",
-    #     "CREATE OR REPLACE NETWORK RULE",
-    #     "CREATE OR REPLACE SECRET",
-    # ]
-    # if any(marker in sql_content.upper() for marker in skip_markers):
-    #     print(f"  Skipping {file} (requires ACCOUNTADMIN - deploy manually)")
-    #     continue
+    Fichiers ACCOUNTADMIN : déployés manuellement (Storage Integration, Network Rule, Secret Gold)
+    skip_markers = [
+        "CREATE OR REPLACE STORAGE INTEGRATION",
+        "CREATE OR REPLACE NETWORK RULE",
+        "CREATE OR REPLACE SECRET",
+    ]
+    if any(marker in sql_content.upper() for marker in skip_markers):
+        print(f"  Skipping {file} (requires ACCOUNTADMIN - deploy manually)")
+        continue
     list_cursor = conn.execute_string(sql_content)
     for cursor in list_cursor:
         for row in cursor:

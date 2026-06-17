@@ -3,7 +3,7 @@ name: Deploy Snowflake DDL
 on:
   push:
     branches:
-      - main
+      - dev_amar
     paths:
       - 'Snowflake/DDL/**'
   workflow_dispatch:
