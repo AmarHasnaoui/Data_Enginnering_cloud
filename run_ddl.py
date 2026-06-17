@@ -2,7 +2,8 @@ import os
 import glob
 import snowflake.connector
 
-account = f"{os.environ['SNOWFLAKE_ORG']}-{os.environ['SNOWFLAKE_ACCOUNT']}"
+account        = f"{os.environ['SNOWFLAKE_ORG']}-{os.environ['SNOWFLAKE_ACCOUNT']}"
+aws_account_id = os.environ.get('AWS_ACCOUNT_ID', '')
 
 conn = snowflake.connector.connect(
     user      = "GITHUB_USER",
@@ -24,7 +25,8 @@ for file in sorted(glob.glob("Snowflake/DDL/*.sql")):
     if any(marker in sql_content.upper() for marker in skip_markers):
         print(f"  Skipping {file} (requires ACCOUNTADMIN - deploy manually)")
         continue
-    list_cursor = conn.execute_string(sql_content)
+    sql_content = sql_content.replace('${AWS_ACCOUNT_ID}', aws_account_id)
+    list_cursor = conn.execute_string(sql_content, remove_comments=True)
     for cursor in list_cursor:
         for row in cursor:
             print(f"  => {row}")

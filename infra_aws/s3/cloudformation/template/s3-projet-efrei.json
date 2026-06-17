@@ -4,11 +4,18 @@
   "Parameters": {
     "SnowpipeAirQualitySQSArn": {
       "Type": "String",
-      "Description": "SQS ARN Snowpipe air_quality (obtenu via : SELECT SYSTEM$PIPE_STATUS('BRONZE.AIR_QUALITY.PIPE_AIR_QUALITY'))"
+      "Default": "",
+      "Description": "SQS ARN Snowpipe air_quality — laisser vide au premier déploiement, renseigner après création des pipes Snowflake"
     },
     "SnowpipeCoordonneesSQSArn": {
       "Type": "String",
-      "Description": "SQS ARN Snowpipe coordonnees (obtenu via : SELECT SYSTEM$PIPE_STATUS('BRONZE.AIR_QUALITY.PIPE_COORDONNEES'))"
+      "Default": "",
+      "Description": "SQS ARN Snowpipe coordonnees — laisser vide au premier déploiement, renseigner après création des pipes Snowflake"
+    }
+  },
+  "Conditions": {
+    "HasSnowpipeNotifications": {
+      "Fn::Not": [{ "Fn::Equals": [{ "Ref": "SnowpipeAirQualitySQSArn" }, ""] }]
     }
   },
   "Resources": {
@@ -49,29 +56,35 @@
           ]
         },
         "NotificationConfiguration": {
-          "QueueConfigurations": [
+          "Fn::If": [
+            "HasSnowpipeNotifications",
             {
-              "Event": "s3:ObjectCreated:*",
-              "Filter": {
-                "S3Key": {
-                  "Rules": [
-                    { "Name": "prefix", "Value": "bronze/air_quality/" }
-                  ]
+              "QueueConfigurations": [
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [
+                        { "Name": "prefix", "Value": "bronze/air_quality/" }
+                      ]
+                    }
+                  },
+                  "Queue": { "Ref": "SnowpipeAirQualitySQSArn" }
+                },
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [
+                        { "Name": "prefix", "Value": "bronze/coordonnees/" }
+                      ]
+                    }
+                  },
+                  "Queue": { "Ref": "SnowpipeCoordonneesSQSArn" }
                 }
-              },
-              "Queue": { "Ref": "SnowpipeAirQualitySQSArn" }
+              ]
             },
-            {
-              "Event": "s3:ObjectCreated:*",
-              "Filter": {
-                "S3Key": {
-                  "Rules": [
-                    { "Name": "prefix", "Value": "bronze/coordonnees/" }
-                  ]
-                }
-              },
-              "Queue": { "Ref": "SnowpipeCoordonneesSQSArn" }
-            }
+            { "Ref": "AWS::NoValue" }
           ]
         },
         "Tags": [

@@ -1,9 +1,9 @@
 name: Deploy Snowflake DDL
 
 on:
-  push:
-    branches:
-      - dev_amar
+  # push:
+  #   branches:
+  #     - dev_amar
   workflow_dispatch:
 
 jobs:
@@ -22,4 +22,5 @@ jobs:
           SNOWFLAKE_ORG:      ${{ secrets.SNOWFLAKE_ORG }}
           SNOWFLAKE_ACCOUNT:  ${{ secrets.SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          AWS_ACCOUNT_ID:     ${{ secrets.AWS_ACCOUNT_ID }}
         run: python run_ddl.py

@@ -1,6 +1,9 @@
 name: Deploy infra AWS
 
 on:
+  push:
+    branches:
+      - dev_amar
   workflow_dispatch:
 
 jobs:
@@ -19,6 +22,8 @@ jobs:
           aws-region: eu-west-3
 
       # --- S3 (à déployer en premier : les autres stacks en dépendent) ---
+      # SQS ARNs vides au 1er run → pas de notifications (condition HasSnowpipeNotifications=false)
+      # Après création des Snowpipes, ajouter les secrets SNOWPIPE_*_SQS_ARN et relancer
       - name: Deploy S3 stack
         run: |
           aws cloudformation deploy \
@@ -26,9 +31,12 @@ jobs:
             --template-file infra_aws/s3/cloudformation/template/s3-projet-efrei.json \
             --parameter-overrides \
               SnowpipeAirQualitySQSArn=${{ secrets.SNOWPIPE_AIR_QUALITY_SQS_ARN }} \
-              SnowpipeCoordonneesSQSArn=${{ secrets.SNOWPIPE_COORDONNEES_SQS_ARN }}
+              SnowpipeCoordonneesSQSArn=${{ secrets.SNOWPIPE_COORDONNEES_SQS_ARN }} \
+            --no-fail-on-empty-changeset
 
       # --- IAM Role ---
+      # SnowflakeExternalId / SnowflakeAwsUserId ont des defaults dans le template
+      # Après création de la Storage Integration, mettre à jour les secrets et relancer
       - name: Deploy IAM stack
         run: |
           aws cloudformation deploy \
@@ -37,7 +45,8 @@ jobs:
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --parameter-overrides \
               SnowflakeExternalId=${{ secrets.SNOWFLAKE_EXTERNAL_ID }} \
-              SnowflakeAwsUserId=${{ secrets.SNOWFLAKE_AWS_USER_ID }}
+              SnowflakeAwsUserId=${{ secrets.SNOWFLAKE_AWS_USER_ID }} \
+            --no-fail-on-empty-changeset
 
       # --- Lambda Extraction ---
       - name: Zip Lambda extraction
