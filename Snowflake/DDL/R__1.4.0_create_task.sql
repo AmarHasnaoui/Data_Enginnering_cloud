@@ -1,4 +1,5 @@
 USE DATABASE SILVER;
+CREATE SCHEMA IF NOT EXISTS TRANSFORMATION;
 USE SCHEMA TRANSFORMATION;
 
 -- Task quotidienne : build complet du projet dbt à 08h00 (après le dépôt S3 J-1)
