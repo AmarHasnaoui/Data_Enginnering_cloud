@@ -55,9 +55,9 @@ resource "snowflake_grant_ownership" "transform_role_silver_owner" {
   }
 }
 
-# --- TRANSFORM_ROLE : USAGE sur BRONZE (accès aux schémas/tables pour lire les raw) ---
+# --- TRANSFORM_ROLE : USAGE sur BRONZE (après transfert de propriété) ---
 resource "snowflake_grant_privileges_to_account_role" "transform_bronze_usage" {
-  depends_on        = [snowflake_database.bronze_db]
+  depends_on        = [snowflake_grant_ownership.ingest_role_bronze_owner]
   account_role_name = snowflake_account_role.transform_role.name
   privileges        = ["USAGE"]
   on_account_object {
@@ -68,7 +68,7 @@ resource "snowflake_grant_privileges_to_account_role" "transform_bronze_usage" {
 
 # --- DATA_ENGINEER : USAGE sur BRONZE + SILVER ---
 resource "snowflake_grant_privileges_to_account_role" "de_bronze_usage" {
-  depends_on        = [snowflake_database.bronze_db]
+  depends_on        = [snowflake_grant_ownership.ingest_role_bronze_owner]
   account_role_name = snowflake_account_role.data_engineer.name
   privileges        = ["USAGE"]
   on_account_object {
@@ -78,7 +78,7 @@ resource "snowflake_grant_privileges_to_account_role" "de_bronze_usage" {
 }
 
 resource "snowflake_grant_privileges_to_account_role" "de_silver_usage" {
-  depends_on        = [snowflake_database.silver_db]
+  depends_on        = [snowflake_grant_ownership.transform_role_silver_owner]
   account_role_name = snowflake_account_role.data_engineer.name
   privileges        = ["USAGE"]
   on_account_object {
@@ -89,7 +89,7 @@ resource "snowflake_grant_privileges_to_account_role" "de_silver_usage" {
 
 # --- DATA_ANALYST : USAGE sur SILVER uniquement ---
 resource "snowflake_grant_privileges_to_account_role" "analyst_silver_usage" {
-  depends_on        = [snowflake_database.silver_db]
+  depends_on        = [snowflake_grant_ownership.transform_role_silver_owner]
   account_role_name = snowflake_account_role.data_analyst.name
   privileges        = ["USAGE"]
   on_account_object {
