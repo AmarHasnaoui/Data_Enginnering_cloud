@@ -21,7 +21,7 @@ jobs:
         env:
           SNOWFLAKE_ORG:                ${{ secrets.SNOWFLAKE_ORG }}
           SNOWFLAKE_ACCOUNT:            ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_TRANSFORM_PASSWORD: ${{ secrets.SNOWFLAKE_TRANSFORM_PASSWORD }}
+          TRANSFORM_USER_PASSWORD: ${{ secrets.TRANSFORM_USER_PASSWORD }}
         run: |
           mkdir -p ~/.snowflake
           python - << 'PYEOF'
@@ -30,7 +30,7 @@ jobs:
               "[connections.novasight]\n"
               f'account   = "{os.environ["SNOWFLAKE_ORG"]}-{os.environ["SNOWFLAKE_ACCOUNT"]}"\n'
               'user      = "TRANSFORM_USER"\n'
-              f'password  = "{os.environ["SNOWFLAKE_TRANSFORM_PASSWORD"]}"\n'
+              f'password  = "{os.environ["TRANSFORM_USER_PASSWORD"]}"\n'
               'role      = "TRANSFORM_ROLE"\n'
               'database  = "SILVER"\n'
               'schema    = "TRANSFORMATION"\n'
