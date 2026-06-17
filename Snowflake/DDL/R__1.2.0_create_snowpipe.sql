@@ -43,6 +43,3 @@ FROM (
 FILE_FORMAT = (FORMAT_NAME = my_csv_format)
 ON_ERROR    = 'CONTINUE';
 
--- Après création, récupérer le SQS ARN à configurer dans la NotificationConfiguration S3 :
--- SHOW PIPES LIKE 'PIPE_AIR_QUALITY';
--- => colonne notification_channel = SQS ARN à passer en paramètre au stack CloudFormation S3

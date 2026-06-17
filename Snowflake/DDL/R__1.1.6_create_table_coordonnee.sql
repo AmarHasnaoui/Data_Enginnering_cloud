@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS RAW_COORDONNEES
     code_site    VARCHAR(255),
     latitude     VARCHAR(255),
     longitude    VARCHAR(255),
-    -- colonnes techniques
     _file_name   VARCHAR(500),
     _loaded_at   TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
 );

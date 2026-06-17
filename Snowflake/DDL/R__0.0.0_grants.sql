@@ -1,9 +1,4 @@
 -- Grants complets NovaSight — exécuté par GITHUB_ROLE (hérite SECURITYADMIN = MANAGE GRANTS)
-
--- ══════════════════════════════════════════════════════════════════════
--- BRONZE  →  DATA_ENGINEER : lecture complète (tous schémas + futurs)
--- ══════════════════════════════════════════════════════════════════════
-
 GRANT USAGE  ON ALL    SCHEMAS IN DATABASE BRONZE TO ROLE DATA_ENGINEER;
 GRANT USAGE  ON FUTURE SCHEMAS IN DATABASE BRONZE TO ROLE DATA_ENGINEER;
 
@@ -16,19 +11,11 @@ GRANT SELECT ON FUTURE VIEWS   IN DATABASE BRONZE TO ROLE DATA_ENGINEER;
 GRANT USAGE  ON ALL    STAGES  IN DATABASE BRONZE TO ROLE DATA_ENGINEER;
 GRANT USAGE  ON FUTURE STAGES  IN DATABASE BRONZE TO ROLE DATA_ENGINEER;
 
--- ══════════════════════════════════════════════════════════════════════
--- BRONZE  →  TRANSFORM_ROLE : lecture pour alimentation dbt SILVER
--- ══════════════════════════════════════════════════════════════════════
-
 GRANT USAGE  ON ALL    SCHEMAS IN DATABASE BRONZE TO ROLE TRANSFORM_ROLE;
 GRANT USAGE  ON FUTURE SCHEMAS IN DATABASE BRONZE TO ROLE TRANSFORM_ROLE;
 
 GRANT SELECT ON ALL    TABLES  IN DATABASE BRONZE TO ROLE TRANSFORM_ROLE;
 GRANT SELECT ON FUTURE TABLES  IN DATABASE BRONZE TO ROLE TRANSFORM_ROLE;
-
--- ══════════════════════════════════════════════════════════════════════
--- SILVER  →  DATA_ENGINEER : lecture complète (tous schémas + futurs)
--- ══════════════════════════════════════════════════════════════════════
 
 GRANT USAGE  ON ALL    SCHEMAS IN DATABASE SILVER TO ROLE DATA_ENGINEER;
 GRANT USAGE  ON FUTURE SCHEMAS IN DATABASE SILVER TO ROLE DATA_ENGINEER;
@@ -39,10 +26,6 @@ GRANT SELECT ON FUTURE TABLES  IN DATABASE SILVER TO ROLE DATA_ENGINEER;
 GRANT SELECT ON ALL    VIEWS   IN DATABASE SILVER TO ROLE DATA_ENGINEER;
 GRANT SELECT ON FUTURE VIEWS   IN DATABASE SILVER TO ROLE DATA_ENGINEER;
 
--- ══════════════════════════════════════════════════════════════════════
--- SILVER  →  DATA_ANALYST : lecture seule (tous schémas + futurs)
--- ══════════════════════════════════════════════════════════════════════
-
 GRANT USAGE  ON ALL    SCHEMAS IN DATABASE SILVER TO ROLE DATA_ANALYST;
 GRANT USAGE  ON FUTURE SCHEMAS IN DATABASE SILVER TO ROLE DATA_ANALYST;
 
@@ -51,10 +34,6 @@ GRANT SELECT ON FUTURE TABLES  IN DATABASE SILVER TO ROLE DATA_ANALYST;
 
 GRANT SELECT ON ALL    VIEWS   IN DATABASE SILVER TO ROLE DATA_ANALYST;
 GRANT SELECT ON FUTURE VIEWS   IN DATABASE SILVER TO ROLE DATA_ANALYST;
-
--- ══════════════════════════════════════════════════════════════════════
--- TRANSFORM_WH  →  OPERATE + MONITOR pour dbt (TRANSFORM_ROLE + DATA_ENGINEER)
--- ══════════════════════════════════════════════════════════════════════
 
 GRANT OPERATE, MONITOR ON WAREHOUSE TRANSFORM_WH TO ROLE TRANSFORM_ROLE;
 GRANT OPERATE, MONITOR ON WAREHOUSE TRANSFORM_WH TO ROLE DATA_ENGINEER;
