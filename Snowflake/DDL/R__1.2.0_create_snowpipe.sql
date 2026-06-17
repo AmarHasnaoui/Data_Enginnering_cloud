@@ -1,6 +1,5 @@
 USE DATABASE BRONZE;
 USE SCHEMA AIR_QUALITY;
-USE ROLE INGEST_ROLE;
 
 -- Snowpipe air quality : auto-ingest dès qu'un fichier arrive dans bronze/air_quality/
 CREATE OR REPLACE PIPE PIPE_AIR_QUALITY

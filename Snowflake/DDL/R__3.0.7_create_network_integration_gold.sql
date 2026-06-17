@@ -2,7 +2,6 @@
 -- DOIT être exécuté manuellement par ACCOUNTADMIN APRÈS création de l'instance Postgres
 -- run_ddl.py ignore ce fichier (ACCOUNTADMIN requis)
 
-USE ROLE ACCOUNTADMIN;
 
 -- Remplacer <GOLD_PG_HOST> par l'hostname de l'instance Snowflake Postgres
 -- Ex : abc123.snowflakecomputing-postgres.com

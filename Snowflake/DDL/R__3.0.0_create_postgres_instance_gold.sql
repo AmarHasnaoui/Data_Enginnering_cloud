@@ -4,7 +4,6 @@
 -- Feature en Public Preview (2026).
 -- Doc : https://docs.snowflake.com/en/user-guide/snowflake-postgres/postgres-create-instance
 
-USE ROLE ACCOUNTADMIN;
 
 -- COMPUTE_FAMILY : reporter la plus petite valeur de la table de référence des tailles
 --   https://docs.snowflake.com/en/user-guide/snowflake-postgres/  (section sizes)

@@ -1,6 +1,5 @@
 USE DATABASE SILVER;
 USE SCHEMA TRANSFORMATION;
-USE ROLE TRANSFORM_ROLE;
 
 -- Task quotidienne : build complet du projet dbt à 08h00 (après le dépôt S3 J-1)
 -- Le projet est déployé dans SILVER.TRANSFORMATION via Snow CLI

@@ -14,7 +14,6 @@ for file in sorted(glob.glob("Snowflake/DDL/*.sql")):
     print(f"Executing {file}...")
     with open(file, "r") as f:
         sql_content = f.read()
-    Fichiers ACCOUNTADMIN : déployés manuellement (Storage Integration, Network Rule, Secret Gold)
     skip_markers = [
         "CREATE OR REPLACE STORAGE INTEGRATION",
         "CREATE OR REPLACE NETWORK RULE",

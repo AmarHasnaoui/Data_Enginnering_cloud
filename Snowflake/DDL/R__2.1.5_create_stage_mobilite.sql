@@ -3,7 +3,6 @@
 -- Évite le couplage cross-schema avec BRONZE.AIR_QUALITY
 USE DATABASE BRONZE;
 USE SCHEMA MOBILITE;
-USE ROLE INGEST_ROLE;
 
 CREATE FILE FORMAT IF NOT EXISTS my_csv_format
   TYPE             = CSV

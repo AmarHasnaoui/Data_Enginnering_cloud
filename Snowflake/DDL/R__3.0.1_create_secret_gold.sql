@@ -1,8 +1,6 @@
 -- Secret stockant les credentials de l'instance Snowflake Postgres (Gold)
 -- DOIT être exécuté manuellement par ACCOUNTADMIN APRÈS création de l'instance Postgres
 -- run_ddl.py ignore ce fichier (ACCOUNTADMIN requis + credentials sensibles)
-
-USE ROLE ACCOUNTADMIN;
 USE DATABASE SILVER;
 USE SCHEMA TRANSFORMATION;
 
