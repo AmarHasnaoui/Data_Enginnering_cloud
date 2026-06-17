@@ -4,13 +4,18 @@
   "Parameters": {
     "SnowflakeExternalId": {
       "Type": "String",
-      "Default": "YD12978_SFCRole=122_Kt//6BTzPsPpZAEiIKtBlg64soM=",
-      "Description": "ExternalId fourni par Snowflake pour la Storage Integration"
+      "Default": "",
+      "Description": "ExternalId Snowflake (DESC INTEGRATION s3_integration → STORAGE_AWS_EXTERNAL_ID)"
     },
     "SnowflakeAwsUserId": {
       "Type": "String",
-      "Default": "arn:aws:iam::260512157176:user/eku71000-s",
-      "Description": "ARN du user Snowflake pour AssumeRole (Storage Integration)"
+      "Default": "",
+      "Description": "ARN user Snowflake (DESC INTEGRATION s3_integration → STORAGE_AWS_IAM_USER_ARN)"
+    }
+  },
+  "Conditions": {
+    "HasSnowflakeTrust": {
+      "Fn::Not": [{ "Fn::Equals": [{ "Ref": "SnowflakeAwsUserId" }, ""] }]
     }
   },
   "Resources": {
@@ -32,14 +37,20 @@
               "Action": "sts:AssumeRole"
             },
             {
-              "Effect": "Allow",
-              "Principal": { "AWS": { "Ref": "SnowflakeAwsUserId" } },
-              "Action": "sts:AssumeRole",
-              "Condition": {
-                "StringEquals": {
-                  "sts:ExternalId": { "Ref": "SnowflakeExternalId" }
-                }
-              }
+              "Fn::If": [
+                "HasSnowflakeTrust",
+                {
+                  "Effect": "Allow",
+                  "Principal": { "AWS": { "Ref": "SnowflakeAwsUserId" } },
+                  "Action": "sts:AssumeRole",
+                  "Condition": {
+                    "StringEquals": {
+                      "sts:ExternalId": { "Ref": "SnowflakeExternalId" }
+                    }
+                  }
+                },
+                { "Ref": "AWS::NoValue" }
+              ]
             }
           ]
         },
