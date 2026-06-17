@@ -22,5 +22,5 @@ jobs:
       - name: Run DDL scripts
         env:
           SNOWFLAKE_ACCOUNT:  ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.INGEST_USER_PASSWORD }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
         run: python run_ddl.py
