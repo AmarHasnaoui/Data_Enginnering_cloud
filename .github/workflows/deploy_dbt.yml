@@ -42,4 +42,5 @@ jobs:
           PYEOF
 
       - name: Deploy dbt project to Snowflake
-        run: snow dbt deploy --project-dir dbt_project --connection novasight
+        working-directory: dbt_project
+        run: snow dbt deploy novasight --profiles-dir . --connection novasight
