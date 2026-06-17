@@ -39,6 +39,7 @@ resource "snowflake_grant_account_role" "data_analyst_to_user" {
 resource "snowflake_grant_ownership" "ingest_role_bronze_owner" {
   depends_on        = [snowflake_database.bronze_db]
   account_role_name = snowflake_account_role.ingest_role.name
+  outbound_privileges = "REVOKE"
   on {
     object_type = "DATABASE"
     object_name = snowflake_database.bronze_db.name
@@ -49,6 +50,7 @@ resource "snowflake_grant_ownership" "ingest_role_bronze_owner" {
 resource "snowflake_grant_ownership" "transform_role_silver_owner" {
   depends_on        = [snowflake_database.silver_db]
   account_role_name = snowflake_account_role.transform_role.name
+  outbound_privileges = "REVOKE"
   on {
     object_type = "DATABASE"
     object_name = snowflake_database.silver_db.name
