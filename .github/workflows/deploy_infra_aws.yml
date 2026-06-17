@@ -35,8 +35,6 @@ jobs:
             --no-fail-on-empty-changeset
 
       # --- IAM Role ---
-      # SnowflakeExternalId / SnowflakeAwsUserId ont des defaults dans le template
-      # Après création de la Storage Integration, mettre à jour les secrets et relancer
       - name: Deploy IAM stack
         run: |
           aws cloudformation deploy \
@@ -44,7 +42,6 @@ jobs:
             --template-file infra_aws/role/cloudformation/template/role-projet-efrei.json \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --parameter-overrides \
-              SnowflakeExternalId=${{ secrets.SNOWFLAKE_EXTERNAL_ID }} \
               SnowflakeAwsUserId=${{ secrets.SNOWFLAKE_AWS_USER_ID }} \
             --no-fail-on-empty-changeset
 
