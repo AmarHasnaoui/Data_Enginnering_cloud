@@ -41,6 +41,9 @@ jobs:
           p.chmod(0o600)
           PYEOF
 
+      - name: Create TRANSFORMATION schema
+        run: snow sql -q "CREATE SCHEMA IF NOT EXISTS SILVER.TRANSFORMATION" --connection novasight
+
       - name: Deploy dbt project to Snowflake
         working-directory: dbt_project
         run: snow dbt deploy novasight --profiles-dir . --connection novasight
