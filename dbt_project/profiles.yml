@@ -4,9 +4,6 @@ novasight:
 
     prod:
       type: snowflake
-      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
-      user: TRANSFORM_USER
-      password: "{{ env_var('SNOWFLAKE_TRANSFORM_PASSWORD') }}"
       role: TRANSFORM_ROLE
       database: SILVER
       schema: TRANSFORMATION
@@ -16,9 +13,6 @@ novasight:
 
     dev:
       type: snowflake
-      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
-      user: "{{ env_var('DBT_USER') }}"
-      password: "{{ env_var('DBT_PASSWORD') }}"
       role: DATA_ENGINEER
       database: SILVER
       schema: TRANSFORMATION
