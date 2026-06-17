@@ -4,12 +4,12 @@
   "Parameters": {
     "SnowflakeExternalId": {
       "Type": "String",
-      "Default": "arn:aws:iam::332896938820:user/2ect1000-s",
+      "Default": "",
       "Description": "ExternalId Snowflake (DESC INTEGRATION s3_integration → STORAGE_AWS_EXTERNAL_ID)"
     },
     "SnowflakeAwsUserId": {
       "Type": "String",
-      "Default": "",
+      "Default": "arn:aws:iam::332896938820:user/2ect1000-s",
       "Description": "ARN user Snowflake (DESC INTEGRATION s3_integration → STORAGE_AWS_IAM_USER_ARN)"
     }
   },
