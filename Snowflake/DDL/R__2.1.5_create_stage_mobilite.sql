@@ -8,7 +8,6 @@ CREATE FILE FORMAT IF NOT EXISTS my_csv_format
   TYPE             = CSV
   FIELD_OPTIONALLY_ENCLOSED_BY = '"'
   SKIP_HEADER      = 1
-  NULL_IF          = ('', 'NULL', 'null')
   EMPTY_FIELD_AS_NULL = TRUE;
 
 CREATE OR REPLACE STAGE stage_bronze_mobilite
