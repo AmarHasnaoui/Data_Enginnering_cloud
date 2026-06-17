@@ -11,5 +11,6 @@ CREATE OR REPLACE STORAGE INTEGRATION s3_integration
 CREATE OR REPLACE STAGE stage_bronze
   URL                 = 's3://s3-projet-efrei/bronze/'
   STORAGE_INTEGRATION = s3_integration
-  FILE_FORMAT         = my_csv_format;
+  FILE_FORMAT         = my_csv_format
+;
 
