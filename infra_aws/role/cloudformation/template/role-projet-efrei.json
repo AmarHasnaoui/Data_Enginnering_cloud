@@ -42,12 +42,12 @@
                 {
                   "Effect": "Allow",
                   "Principal": { "AWS": { "Ref": "SnowflakeAwsUserId" } },
-                  "Action": "sts:AssumeRole",
-                  "Condition": {
-                    "StringEquals": {
-                      "sts:ExternalId": { "Ref": "SnowflakeExternalId" }
-                    }
-                  }
+                  "Action": "sts:AssumeRole"
+                  // "Condition": {
+                  //   "StringEquals": {
+                  //     "sts:ExternalId": { "Ref": "SnowflakeExternalId" }
+                  //   }
+                  // }
                 },
                 { "Ref": "AWS::NoValue" }
               ]
