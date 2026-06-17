@@ -1,5 +1,4 @@
 import os
-import re
 import glob
 import snowflake.connector
 
@@ -13,11 +12,6 @@ conn = snowflake.connector.connect(
     warehouse = "TRANSFORM_WH"
 )
 
-def split_sql(sql):
-    sql = re.sub(r'--[^\n]*', '', sql)       # strip single-line comments
-    sql = re.sub(r'/\*.*?\*/', '', sql, flags=re.DOTALL)  # strip block comments
-    return [s.strip() for s in sql.split(';') if s.strip()]
-
 for file in sorted(glob.glob("Snowflake/DDL/*.sql")):
     print(f"Executing {file}...")
     with open(file, "r") as f:
@@ -30,12 +24,10 @@ for file in sorted(glob.glob("Snowflake/DDL/*.sql")):
     if any(marker in sql_content.upper() for marker in skip_markers):
         print(f"  Skipping {file} (requires ACCOUNTADMIN - deploy manually)")
         continue
-    for stmt in split_sql(sql_content):
-        cur = conn.cursor()
-        cur.execute(stmt)
-        for row in cur:
+    list_cursor = conn.execute_string(sql_content)
+    for cursor in list_cursor:
+        for row in cursor:
             print(f"  => {row}")
-        cur.close()
 
 conn.close()
 print("DDL deployment complete.")
