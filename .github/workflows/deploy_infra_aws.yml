@@ -1,9 +1,9 @@
 name: Deploy infra AWS
 
 on:
-  push:
-    branches:
-      - dev_amar
+  # push:
+  #   branches:
+  #     - dev_amar
   workflow_dispatch:
 
 jobs:
@@ -66,6 +66,31 @@ jobs:
             --template-file infra_aws/lambda_extraction/cloudformation/template/lambda-projet-efrei-extraction.json \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
 
+      # --- DynamoDB Vélib realtime ---
+      - name: Deploy DynamoDB stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-dynamo \
+            --template-file infra_aws/dynamo/cloudformation/template/dynamo-projet-efrei.json \
+            --no-fail-on-empty-changeset
+
+      # --- EC2 Kafka (producer Vélib → consumer DynamoDB) ---
+      - name: Upload scripts Kafka vers S3
+        run: |
+          aws s3 cp infra_aws/ec2/code/producer_velib.py s3://s3-projet-efrei/ec2/producer_velib.py
+          aws s3 cp infra_aws/ec2/code/consumer_velib.py s3://s3-projet-efrei/ec2/consumer_velib.py
+          aws s3 cp infra_aws/ec2/code/setup.sh          s3://s3-projet-efrei/ec2/setup.sh
+
+      - name: Deploy EC2 Kafka stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-kafka \
+            --template-file infra_aws/ec2/cloudformation/template/ec2-projet-efrei-kafka.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              KeyName=${{ secrets.EC2_KEY_NAME }} \
+            --no-fail-on-empty-changeset
+
       # --- Step Function ---
       - name: Upload Step Function definition to S3
         run: aws s3 cp infra_aws/stepfunction/code/code_step.json s3://s3-projet-efrei/stepfunction/code_step.json
@@ -76,3 +101,44 @@ jobs:
             --stack-name projet-efrei-stepfunction \
             --template-file infra_aws/stepfunction/cloudformation/template/projet-efrei-step.json \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      # --- RDS Gold (Postgres) ---
+      - name: Deploy RDS stack
+        run: |
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters Name=isDefault,Values=true \
+            --query 'Vpcs[0].VpcId' --output text)
+          SUBNET_IDS=$(aws ec2 describe-subnets \
+            --filters Name=vpc-id,Values=$VPC_ID \
+            --query 'Subnets[*].SubnetId' --output text | tr '\t' ',')
+          aws cloudformation deploy \
+            --stack-name projet-efrei-rds \
+            --template-file infra_aws/rds/cloudformation/template/rds-projet-efrei.json \
+            --parameter-overrides \
+              DBPassword=${{ secrets.RDS_PASSWORD }} \
+              VpcId=$VPC_ID \
+              SubnetIds=$SUBNET_IDS \
+            --no-fail-on-empty-changeset
+
+      # --- Lambda Export Silver → RDS ---
+      - name: Zip Lambda export
+        run: |
+          cd infra_aws/lambda_export/code
+          pip install snowflake-connector-python psycopg2-binary -t .
+          zip -r ../../../export.zip .
+
+      - name: Upload export zip to S3
+        run: aws s3 cp export.zip s3://s3-projet-efrei/lambda/export.zip
+
+      - name: Deploy Lambda export stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-export \
+            --template-file infra_aws/lambda_export/cloudformation/template/lambda-projet-efrei-export.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              SnowflakeOrg=${{ secrets.SNOWFLAKE_ORG }} \
+              SnowflakeAccount=${{ secrets.SNOWFLAKE_ACCOUNT }} \
+              TransformUserPassword=${{ secrets.TRANSFORM_USER_PASSWORD }} \
+              RDSPassword=${{ secrets.RDS_PASSWORD }} \
+            --no-fail-on-empty-changeset

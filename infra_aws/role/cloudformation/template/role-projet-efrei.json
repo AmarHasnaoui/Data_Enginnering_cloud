@@ -85,6 +85,14 @@
                   }
                 },
                 {
+                  "Sid": "DynamoDBVelibRead",
+                  "Effect": "Allow",
+                  "Action": ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:dynamodb:eu-west-3:${AWS::AccountId}:table/velib_realtime"
+                  }
+                },
+                {
                   "Sid": "CloudWatchLogs",
                   "Effect": "Allow",
                   "Action": [

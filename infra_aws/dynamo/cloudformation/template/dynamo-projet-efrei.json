@@ -1,0 +1,33 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "DynamoDB velib_realtime — état courant des stations Vélib (last known state)",
+  "Resources": {
+    "VelibRealtimeTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "velib_realtime",
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          { "AttributeName": "stationId", "AttributeType": "S" }
+        ],
+        "KeySchema": [
+          { "AttributeName": "stationId", "KeyType": "HASH" }
+        ],
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Layer",   "Value": "RealTime" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "TableName": {
+      "Value": { "Ref": "VelibRealtimeTable" },
+      "Export": { "Name": "projet-efrei-dynamo-velib-table" }
+    },
+    "TableArn": {
+      "Value": { "Fn::GetAtt": ["VelibRealtimeTable", "Arn"] },
+      "Export": { "Name": "projet-efrei-dynamo-velib-arn" }
+    }
+  }
+}

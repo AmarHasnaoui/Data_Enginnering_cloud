@@ -4,7 +4,7 @@
   "States": {
     "Extraction": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:eu-west-3:221996521946:function:projet-efrei-extraction",
+      "Resource": "${LambdaExtractionArn}",
       "ResultPath": "$.extractionResult",
       "Next": "SuccessState",
       "Catch": [

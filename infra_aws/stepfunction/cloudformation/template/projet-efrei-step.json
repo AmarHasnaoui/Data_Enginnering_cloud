@@ -12,6 +12,11 @@
         "DefinitionS3Location": {
           "Bucket": "s3-projet-efrei",
           "Key": "stepfunction/code_step.json"
+        },
+        "DefinitionSubstitutions": {
+          "LambdaExtractionArn": {
+            "Fn::Sub": "arn:aws:lambda:eu-west-3:${AWS::AccountId}:function:projet-efrei-extraction"
+          }
         }
       }
     }

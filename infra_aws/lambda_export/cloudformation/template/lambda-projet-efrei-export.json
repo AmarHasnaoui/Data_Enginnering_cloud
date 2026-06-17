@@ -1,0 +1,105 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Lambda export Silver→RDS + EventBridge 09:00 UTC (10:00 Paris hiver)",
+  "Parameters": {
+    "SnowflakeOrg": {
+      "Type": "String",
+      "Description": "Organisation Snowflake (secret SNOWFLAKE_ORG)"
+    },
+    "SnowflakeAccount": {
+      "Type": "String",
+      "Description": "Compte Snowflake (secret SNOWFLAKE_ACCOUNT)"
+    },
+    "TransformUserPassword": {
+      "Type": "String",
+      "NoEcho": true,
+      "Description": "Mot de passe TRANSFORM_USER (secret TRANSFORM_USER_PASSWORD)"
+    },
+    "RDSPassword": {
+      "Type": "String",
+      "NoEcho": true,
+      "Description": "Mot de passe RDS (secret RDS_PASSWORD)"
+    }
+  },
+  "Resources": {
+    "LambdaExportRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "lambda-export-role",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": "lambda.amazonaws.com" },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ]
+      }
+    },
+    "LambdaExport": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "lambda-projet-efrei-export",
+        "Runtime": "python3.12",
+        "Handler": "lambda_function.lambda_handler",
+        "Role": { "Fn::GetAtt": ["LambdaExportRole", "Arn"] },
+        "Code": {
+          "S3Bucket": "s3-projet-efrei",
+          "S3Key": "lambda/export.zip"
+        },
+        "Timeout": 300,
+        "MemorySize": 512,
+        "Environment": {
+          "Variables": {
+            "SNOWFLAKE_ORG":           { "Ref": "SnowflakeOrg" },
+            "SNOWFLAKE_ACCOUNT":       { "Ref": "SnowflakeAccount" },
+            "TRANSFORM_USER_PASSWORD": { "Ref": "TransformUserPassword" },
+            "RDS_HOST":     { "Fn::ImportValue": "projet-efrei-rds-endpoint" },
+            "RDS_PORT":     { "Fn::ImportValue": "projet-efrei-rds-port" },
+            "RDS_DATABASE": "novasight",
+            "RDS_USER":     "novasight_admin",
+            "RDS_PASSWORD": { "Ref": "RDSPassword" }
+          }
+        },
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Layer",   "Value": "Gold" }
+        ]
+      }
+    },
+    "EventBridgeRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Name": "novasight-export-silver-rds",
+        "Description": "Déclenche l'export Silver→RDS à 09:00 UTC (après dbt 08:00 Paris)",
+        "ScheduleExpression": "cron(0 9 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Id": "LambdaExportTarget",
+            "Arn": { "Fn::GetAtt": ["LambdaExport", "Arn"] }
+          }
+        ]
+      }
+    },
+    "LambdaPermissionEventBridge": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Fn::GetAtt": ["LambdaExport", "Arn"] },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["EventBridgeRule", "Arn"] }
+      }
+    }
+  },
+  "Outputs": {
+    "LambdaExportArn": {
+      "Value": { "Fn::GetAtt": ["LambdaExport", "Arn"] }
+    }
+  }
+}

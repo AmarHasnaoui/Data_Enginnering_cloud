@@ -31,6 +31,6 @@ SELECT
     TRY_CAST(validite     AS FLOAT)  AS validite,
     _loaded_at,
     _file_name
-FROM BRONZE.AIR_QUALITY.RAW_AIR_QUALITY
+FROM {{ source('bronze_air_quality', 'RAW_AIR_QUALITY') }}
 WHERE date_debut IS NOT NULL
   AND code_site  IS NOT NULL

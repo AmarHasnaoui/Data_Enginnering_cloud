@@ -1,0 +1,79 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "RDS Postgres Gold - réception données Silver depuis Lambda export",
+  "Parameters": {
+    "DBPassword": {
+      "Type": "String",
+      "NoEcho": true,
+      "Description": "Mot de passe admin RDS (secret RDS_PASSWORD)"
+    },
+    "VpcId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "VPC par défaut (auto-détecté dans le workflow)"
+    },
+    "SubnetIds": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "Subnets du VPC par défaut (auto-détectés dans le workflow)"
+    }
+  },
+  "Resources": {
+    "RDSSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "PostgreSQL access for NovaSight RDS",
+        "VpcId": { "Ref": "VpcId" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Tags": [{ "Key": "Project", "Value": "ProjetEfrei" }]
+      }
+    },
+    "RDSSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnet group for NovaSight RDS Gold",
+        "SubnetIds": { "Ref": "SubnetIds" },
+        "Tags": [{ "Key": "Project", "Value": "ProjetEfrei" }]
+      }
+    },
+    "RDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "DeletionPolicy": "Snapshot",
+      "Properties": {
+        "DBInstanceIdentifier": "rds-projet-efrei",
+        "DBInstanceClass": "db.t3.micro",
+        "Engine": "postgres",
+        "EngineVersion": "16.3",
+        "DBName": "novasight",
+        "MasterUsername": "novasight_admin",
+        "MasterUserPassword": { "Ref": "DBPassword" },
+        "AllocatedStorage": "20",
+        "StorageType": "gp2",
+        "PubliclyAccessible": true,
+        "DBSubnetGroupName": { "Ref": "RDSSubnetGroup" },
+        "VPCSecurityGroups": [{ "Fn::GetAtt": ["RDSSecurityGroup", "GroupId"] }],
+        "BackupRetentionPeriod": 7,
+        "DeletionProtection": false,
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Layer", "Value": "Gold" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "RDSEndpoint": {
+      "Value": { "Fn::GetAtt": ["RDSInstance", "Endpoint.Address"] },
+      "Export": { "Name": "projet-efrei-rds-endpoint" }
+    },
+    "RDSPort": {
+      "Value": { "Fn::GetAtt": ["RDSInstance", "Endpoint.Port"] },
+      "Export": { "Name": "projet-efrei-rds-port" }
+    }
+  }
+}
