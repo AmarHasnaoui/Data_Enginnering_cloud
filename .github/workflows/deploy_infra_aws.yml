@@ -1,0 +1,67 @@
+name: Deploy infra AWS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+
+      # --- S3 (à déployer en premier : les autres stacks en dépendent) ---
+      - name: Deploy S3 stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-s3 \
+            --template-file infra_aws/s3/cloudformation/template/s3-projet-efrei.json \
+            --parameter-overrides \
+              SnowpipeAirQualitySQSArn=${{ secrets.SNOWPIPE_AIR_QUALITY_SQS_ARN }} \
+              SnowpipeCoordonneesSQSArn=${{ secrets.SNOWPIPE_COORDONNEES_SQS_ARN }}
+
+      # --- IAM Role ---
+      - name: Deploy IAM stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-iam \
+            --template-file infra_aws/role/cloudformation/template/role-projet-efrei.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              SnowflakeExternalId=${{ secrets.SNOWFLAKE_EXTERNAL_ID }} \
+              SnowflakeAwsUserId=${{ secrets.SNOWFLAKE_AWS_USER_ID }}
+
+      # --- Lambda Extraction ---
+      - name: Zip Lambda extraction
+        run: |
+          cd infra_aws/lambda_extraction/code
+          zip -r ../../../extraction.zip lambda_function.py
+
+      - name: Upload extraction zip to S3
+        run: aws s3 cp extraction.zip s3://s3-projet-efrei/lambda/extraction.zip
+
+      - name: Deploy Lambda extraction stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-extraction \
+            --template-file infra_aws/lambda_extraction/cloudformation/template/lambda-projet-efrei-extraction.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      # --- Step Function ---
+      - name: Upload Step Function definition to S3
+        run: aws s3 cp infra_aws/stepfunction/code/code_step.json s3://s3-projet-efrei/stepfunction/code_step.json
+
+      - name: Deploy Step Function stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-stepfunction \
+            --template-file infra_aws/stepfunction/cloudformation/template/projet-efrei-step.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM

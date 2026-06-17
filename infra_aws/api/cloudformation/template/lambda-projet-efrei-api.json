@@ -1,0 +1,64 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Lambda FastAPI NovaSight — serving layer Gold PostgreSQL",
+
+  "Parameters": {
+    "LambdaS3Bucket": { "Type": "String", "Description": "Bucket S3 contenant le zip Lambda" },
+    "LambdaS3Key":    { "Type": "String", "Description": "Clé S3 du zip Lambda (ex: lambda/api.zip)" },
+    "IamRoleArn":     { "Type": "String", "Description": "ARN du rôle IAM projet-efrei-role" },
+    "GoldPgHost":     { "Type": "String", "NoEcho": true },
+    "GoldPgUser":     { "Type": "String", "NoEcho": true },
+    "GoldPgPassword": { "Type": "String", "NoEcho": true },
+    "GoldPgDatabase": { "Type": "String" },
+    "GoldPgPort":     { "Type": "String", "Default": "5432" }
+  },
+
+  "Resources": {
+
+    "LambdaApi": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "projet-efrei-api",
+        "Runtime": "python3.12",
+        "Handler": "main.handler",
+        "Role": { "Ref": "IamRoleArn" },
+        "Code": {
+          "S3Bucket": { "Ref": "LambdaS3Bucket" },
+          "S3Key":    { "Ref": "LambdaS3Key" }
+        },
+        "Timeout": 30,
+        "MemorySize": 256,
+        "Environment": {
+          "Variables": {
+            "GOLD_PG_HOST":     { "Ref": "GoldPgHost" },
+            "GOLD_PG_USER":     { "Ref": "GoldPgUser" },
+            "GOLD_PG_PASSWORD": { "Ref": "GoldPgPassword" },
+            "GOLD_PG_DATABASE": { "Ref": "GoldPgDatabase" },
+            "GOLD_PG_PORT":     { "Ref": "GoldPgPort" }
+          }
+        }
+      }
+    },
+
+    "LambdaInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Fn::GetAtt": ["LambdaApi", "Arn"] },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com"
+      }
+    }
+  },
+
+  "Outputs": {
+    "LambdaApiArn": {
+      "Description": "ARN de la Lambda FastAPI",
+      "Value": { "Fn::GetAtt": ["LambdaApi", "Arn"] },
+      "Export": { "Name": "projet-efrei-LambdaApiArn" }
+    },
+    "LambdaApiName": {
+      "Value": { "Ref": "LambdaApi" },
+      "Export": { "Name": "projet-efrei-LambdaApiName" }
+    }
+  }
+}

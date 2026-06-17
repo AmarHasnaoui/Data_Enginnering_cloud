@@ -1,0 +1,41 @@
+name: 'novasight'
+version: '1.0.0'
+config-version: 2
+
+profile: 'novasight'
+
+model-paths:  ["models"]
+test-paths:   ["tests"]
+seed-paths:   ["seeds"]
+
+target-path:  "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Projet déployé dans SILVER.TRANSFORMATION via Snow CLI (snow dbt run)
+# Les modèles sont écrits dans leurs schémas respectifs (generate_schema_name override)
+
+models:
+  novasight:
+    +database: SILVER
+
+    air_quality:
+      +schema: AIR_QUALITY
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: table
+      marts:
+        +materialized: incremental
+
+    mobilite:
+      +schema: MOBILITE
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: table
+      marts:
+        +materialized: incremental
+
+    smartcity:
+      +schema: SMARTCITY
+      +materialized: incremental

@@ -1,0 +1,32 @@
+name: Deploy Gold DDL (Snowflake Postgres)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Snowflake/GOLD_DDL/**'
+      - 'run_gold_ddl.py'
+
+jobs:
+  deploy-gold-ddl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install psycopg2-binary
+
+      - name: Run Gold DDL
+        env:
+          GOLD_PG_HOST:     ${{ secrets.GOLD_PG_HOST }}
+          GOLD_PG_USER:     ${{ secrets.GOLD_PG_USER }}
+          GOLD_PG_PASSWORD: ${{ secrets.GOLD_PG_PASSWORD }}
+          GOLD_PG_DATABASE: ${{ secrets.GOLD_PG_DATABASE }}
+          GOLD_PG_PORT:     ${{ secrets.GOLD_PG_PORT }}
+        run: python run_gold_ddl.py

@@ -1,0 +1,137 @@
+version: 2
+
+sources:
+  - name: bronze_mobilite
+    database: BRONZE
+    schema: MOBILITE
+    description: "Données brutes mobilité chargées depuis S3 via Snowpipe (opendata.paris.fr + DynamoDB export)"
+
+    tables:
+      - name: RAW_TRAFIC_VELO
+        description: "Comptages horaires vélo par compteur (Paris) — source opendata.paris.fr"
+        columns:
+          - name: compteur_id
+            description: "Identifiant unique du compteur vélo"
+            tests: [not_null]
+          - name: compteur_nom
+            description: "Nom lisible du compteur"
+          - name: site_id
+            description: "Identifiant du site de comptage"
+          - name: name
+            description: "Nom du site de comptage"
+          - name: sum_counts
+            description: "Nombre de passages vélo sur la période (brut VARCHAR)"
+            tests: [not_null]
+          - name: date
+            description: "Date et heure du comptage (brut VARCHAR)"
+            tests: [not_null]
+          - name: date_installation
+            description: "Date d'installation du compteur"
+          - name: lien_photo_site
+            description: "URL photo du site de comptage"
+          - name: coordonnees_geographiques
+            description: "Coordonnées GPS du compteur (lat,lon)"
+          - name: counter
+            description: "Référence interne du compteur"
+          - name: mois_annee_comptage
+            description: "Mois/année du comptage (YYYY-MM)"
+          - name: _file_name
+            description: "Fichier S3 source (METADATA$FILENAME)"
+            tests: [not_null]
+          - name: _loaded_at
+            description: "Timestamp de chargement Snowpipe"
+            tests: [not_null]
+
+      - name: RAW_TRAFIC_ROUTIER
+        description: "Comptages horaires trafic routier par arc (Paris) — source opendata.paris.fr"
+        columns:
+          - name: iu_ac
+            description: "Identifiant unique de l'arc (tronçon) routier"
+            tests: [not_null]
+          - name: libelle
+            description: "Nom de l'arc routier"
+          - name: t_1h
+            description: "Timestamp du comptage horaire (brut VARCHAR)"
+            tests: [not_null]
+          - name: k
+            description: "Taux d'occupation de la voie en % (brut VARCHAR)"
+          - name: q
+            description: "Débit horaire en véhicules/heure (brut VARCHAR)"
+          - name: etat_trafic
+            description: "État du trafic : Fluide, Dense, Saturé, Bloqué"
+            tests:
+              - accepted_values:
+                  values: ['Fluide', 'Dense', 'Saturé', 'Bloqué', 'Inconnu', 'Pré-saturé']
+                  severity: warn
+          - name: iu_nd_amont
+            description: "Identifiant du nœud amont"
+          - name: libelle_nd_amont
+            description: "Libellé du nœud amont"
+          - name: iu_nd_aval
+            description: "Identifiant du nœud aval"
+          - name: libelle_nd_aval
+            description: "Libellé du nœud aval"
+          - name: etat_barre
+            description: "État de la barre (ouvert/fermé)"
+          - name: geo_point_2d
+            description: "Point GPS centre de l'arc (lat,lon)"
+          - name: _file_name
+            description: "Fichier S3 source"
+            tests: [not_null]
+          - name: _loaded_at
+            description: "Timestamp de chargement Snowpipe"
+            tests: [not_null]
+
+      - name: RAW_STATIONS_VELIB
+        description: "Emplacements statiques des stations Vélib (référentiel) — source opendata.paris.fr"
+        columns:
+          - name: stationcode
+            description: "Code unique de la station Vélib"
+            tests: [not_null, unique]
+          - name: name
+            description: "Nom de la station"
+            tests: [not_null]
+          - name: capacity
+            description: "Capacité totale de la station (brut VARCHAR)"
+          - name: coordonnees_geo_lat
+            description: "Latitude WGS84 de la station (brut VARCHAR)"
+            tests: [not_null]
+          - name: coordonnees_geo_lon
+            description: "Longitude WGS84 de la station (brut VARCHAR)"
+            tests: [not_null]
+          - name: nom_arrondissement_communes
+            description: "Nom de l'arrondissement ou commune"
+          - name: code_insee_commune
+            description: "Code INSEE de la commune"
+          - name: _file_name
+            description: "Fichier S3 source"
+            tests: [not_null]
+          - name: _loaded_at
+            description: "Timestamp de chargement Snowpipe"
+            tests: [not_null]
+
+      - name: RAW_VELIB_REALTIME
+        description: "Export quotidien des données temps réel Vélib depuis DynamoDB (via Lambda export → S3)"
+        columns:
+          - name: station_id
+            description: "Code de la station Vélib (FK vers RAW_STATIONS_VELIB.stationcode)"
+            tests: [not_null]
+          - name: timestamp_ingestion
+            description: "Timestamp de la mesure temps réel (brut VARCHAR)"
+            tests: [not_null]
+          - name: num_bikes_available
+            description: "Nombre de vélos disponibles au moment de la mesure"
+          - name: num_docks_available
+            description: "Nombre de places disponibles"
+          - name: mechanical
+            description: "Nombre de vélos mécaniques disponibles"
+          - name: ebike
+            description: "Nombre de vélos électriques disponibles"
+          - name: nom_arrondissement_communes
+            description: "Arrondissement/commune de la station"
+          - name: _file_name
+            description: "Fichier S3 source"
+            tests: [not_null]
+          - name: _loaded_at
+            description: "Timestamp de chargement Snowpipe"
+            tests: [not_null]

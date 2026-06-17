@@ -1,0 +1,117 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "IAM Role pour le pipeline de données (moindre privilège)",
+  "Parameters": {
+    "SnowflakeExternalId": {
+      "Type": "String",
+      "Default": "YD12978_SFCRole=122_Kt//6BTzPsPpZAEiIKtBlg64soM=",
+      "Description": "ExternalId fourni par Snowflake pour la Storage Integration"
+    },
+    "SnowflakeAwsUserId": {
+      "Type": "String",
+      "Default": "arn:aws:iam::260512157176:user/eku71000-s",
+      "Description": "ARN du user Snowflake pour AssumeRole (Storage Integration)"
+    }
+  },
+  "Resources": {
+    "ProjetEfreiPipelineRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "projet-efrei-role",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com",
+                  "states.amazonaws.com"
+                ]
+              },
+              "Action": "sts:AssumeRole"
+            },
+            {
+              "Effect": "Allow",
+              "Principal": { "AWS": { "Ref": "SnowflakeAwsUserId" } },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": { "Ref": "SnowflakeExternalId" }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "ProjetEfreiPipelinePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "S3BucketList",
+                  "Effect": "Allow",
+                  "Action": ["s3:ListBucket", "s3:GetBucketLocation"],
+                  "Resource": "arn:aws:s3:::s3-projet-efrei"
+                },
+                {
+                  "Sid": "S3ObjectAccess",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+                  "Resource": "arn:aws:s3:::s3-projet-efrei/*"
+                },
+                {
+                  "Sid": "LambdaInvoke",
+                  "Effect": "Allow",
+                  "Action": ["lambda:InvokeFunction"],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:lambda:eu-west-3:${AWS::AccountId}:function:projet-efrei-*"
+                  }
+                },
+                {
+                  "Sid": "StepFunctionInvoke",
+                  "Effect": "Allow",
+                  "Action": [
+                    "states:StartExecution",
+                    "states:DescribeExecution",
+                    "states:GetExecutionHistory"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:states:eu-west-3:${AWS::AccountId}:stateMachine:projet-efrei-*"
+                  }
+                },
+                {
+                  "Sid": "SecretsManagerAccess",
+                  "Effect": "Allow",
+                  "Action": ["secretsmanager:GetSecretValue"],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:secretsmanager:eu-west-3:${AWS::AccountId}:secret:projet-efrei/*"
+                  }
+                },
+                {
+                  "Sid": "CloudWatchLogs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:logs:eu-west-3:${AWS::AccountId}:log-group:/aws/lambda/projet-efrei-*:*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "RoleArn": {
+      "Value": { "Fn::GetAtt": ["ProjetEfreiPipelineRole", "Arn"] },
+      "Export": { "Name": "projet-efrei-role-arn" }
+    }
+  }
+}

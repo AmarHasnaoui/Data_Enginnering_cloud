@@ -1,0 +1,68 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Cognito User Pool — authentification NovaSight API",
+
+  "Resources": {
+
+    "UserPool": {
+      "Type": "AWS::Cognito::UserPool",
+      "Properties": {
+        "UserPoolName": "projet-efrei-user-pool",
+        "UsernameAttributes": ["email"],
+        "AutoVerifiedAttributes": ["email"],
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 8,
+            "RequireUppercase": true,
+            "RequireLowercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": false
+          }
+        },
+        "Schema": [
+          { "Name": "email", "AttributeDataType": "String", "Required": true, "Mutable": true }
+        ]
+      }
+    },
+
+    "UserPoolClient": {
+      "Type": "AWS::Cognito::UserPoolClient",
+      "Properties": {
+        "ClientName": "projet-efrei-app-client",
+        "UserPoolId": { "Ref": "UserPool" },
+        "GenerateSecret": false,
+        "ExplicitAuthFlows": [
+          "ALLOW_USER_PASSWORD_AUTH",
+          "ALLOW_REFRESH_TOKEN_AUTH",
+          "ALLOW_USER_SRP_AUTH"
+        ],
+        "AccessTokenValidity": 1,
+        "IdTokenValidity": 1,
+        "RefreshTokenValidity": 30,
+        "TokenValidityUnits": {
+          "AccessToken": "hours",
+          "IdToken": "hours",
+          "RefreshToken": "days"
+        }
+      }
+    }
+  },
+
+  "Outputs": {
+    "UserPoolId": {
+      "Description": "Cognito User Pool ID",
+      "Value": { "Ref": "UserPool" },
+      "Export": { "Name": "projet-efrei-UserPoolId" }
+    },
+    "UserPoolArn": {
+      "Description": "Cognito User Pool ARN",
+      "Value": { "Fn::GetAtt": ["UserPool", "Arn"] },
+      "Export": { "Name": "projet-efrei-UserPoolArn" }
+    },
+    "UserPoolClientId": {
+      "Description": "Cognito App Client ID",
+      "Value": { "Ref": "UserPoolClient" },
+      "Export": { "Name": "projet-efrei-UserPoolClientId" }
+    }
+  }
+}

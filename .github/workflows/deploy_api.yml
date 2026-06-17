@@ -1,0 +1,124 @@
+name: Deploy API (FastAPI + Cognito + API Gateway)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra_aws/api/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION:       eu-west-3
+  S3_BUCKET:        s3-projet-efrei
+  LAMBDA_ZIP_KEY:   lambda/api.zip
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      # ─────────────────────────────────────────────────────────
+      # 1. Build Lambda zip (FastAPI + Mangum + psycopg2)
+      # ─────────────────────────────────────────────────────────
+      - name: Build Lambda package
+        run: |
+          pip install \
+            --target infra_aws/api/package \
+            -r infra_aws/api/requirements.txt
+          cp infra_aws/api/code/*.py infra_aws/api/package/
+          cd infra_aws/api/package
+          zip -r ../../../api.zip .
+
+      - name: Upload Lambda zip to S3
+        run: |
+          aws s3 cp api.zip s3://${{ env.S3_BUCKET }}/${{ env.LAMBDA_ZIP_KEY }}
+
+      # ─────────────────────────────────────────────────────────
+      # 2. Deploy Cognito stack
+      # ─────────────────────────────────────────────────────────
+      - name: Deploy Cognito stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name    projet-efrei-cognito \
+            --template-file infra_aws/api/cloudformation/template/cognito-projet-efrei.json \
+            --capabilities  CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Get Cognito outputs
+        id: cognito
+        run: |
+          POOL_ARN=$(aws cloudformation describe-stacks \
+            --stack-name projet-efrei-cognito \
+            --query "Stacks[0].Outputs[?OutputKey=='UserPoolArn'].OutputValue" \
+            --output text)
+          echo "user_pool_arn=$POOL_ARN" >> $GITHUB_OUTPUT
+
+      # ─────────────────────────────────────────────────────────
+      # 3. Deploy Lambda API stack
+      # ─────────────────────────────────────────────────────────
+      - name: Get IAM Role ARN
+        id: iam
+        run: |
+          ROLE_ARN=$(aws cloudformation describe-stacks \
+            --stack-name projet-efrei-iam \
+            --query "Stacks[0].Outputs[?OutputKey=='RoleArn'].OutputValue" \
+            --output text)
+          echo "role_arn=$ROLE_ARN" >> $GITHUB_OUTPUT
+
+      - name: Deploy Lambda API stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name    projet-efrei-lambda-api \
+            --template-file infra_aws/api/cloudformation/template/lambda-projet-efrei-api.json \
+            --capabilities  CAPABILITY_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              LambdaS3Bucket="${{ env.S3_BUCKET }}" \
+              LambdaS3Key="${{ env.LAMBDA_ZIP_KEY }}" \
+              IamRoleArn="${{ steps.iam.outputs.role_arn }}" \
+              GoldPgHost="${{ secrets.GOLD_PG_HOST }}" \
+              GoldPgUser="${{ secrets.GOLD_PG_USER }}" \
+              GoldPgPassword="${{ secrets.GOLD_PG_PASSWORD }}" \
+              GoldPgDatabase="${{ secrets.GOLD_PG_DATABASE }}" \
+              GoldPgPort="${{ secrets.GOLD_PG_PORT }}"
+
+      - name: Get Lambda API ARN
+        id: lambda_api
+        run: |
+          LAMBDA_ARN=$(aws cloudformation describe-stacks \
+            --stack-name projet-efrei-lambda-api \
+            --query "Stacks[0].Outputs[?OutputKey=='LambdaApiArn'].OutputValue" \
+            --output text)
+          echo "lambda_arn=$LAMBDA_ARN" >> $GITHUB_OUTPUT
+
+      # ─────────────────────────────────────────────────────────
+      # 4. Deploy API Gateway stack
+      # ─────────────────────────────────────────────────────────
+      - name: Deploy API Gateway stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name    projet-efrei-api-gateway \
+            --template-file infra_aws/api/cloudformation/template/api-projet-efrei.json \
+            --capabilities  CAPABILITY_IAM \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              LambdaApiArn="${{ steps.lambda_api.outputs.lambda_arn }}" \
+              UserPoolArn="${{ steps.cognito.outputs.user_pool_arn }}"
+
+      - name: Print API URL
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name projet-efrei-api-gateway \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          echo " API disponible : $API_URL"
+          echo "Docs Swagger : $API_URL/docs"

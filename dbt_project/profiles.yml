@@ -1,0 +1,27 @@
+novasight:
+  target: prod
+  outputs:
+
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: TRANSFORM_USER
+      password: "{{ env_var('SNOWFLAKE_TRANSFORM_PASSWORD') }}"
+      role: TRANSFORM_ROLE
+      database: SILVER
+      schema: TRANSFORMATION
+      warehouse: TRANSFORM_WH
+      threads: 4
+      client_session_keep_alive: false
+
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('DBT_USER') }}"
+      password: "{{ env_var('DBT_PASSWORD') }}"
+      role: DATA_ENGINEER
+      database: SILVER
+      schema: TRANSFORMATION
+      warehouse: QUERY_WH
+      threads: 2
+      client_session_keep_alive: false

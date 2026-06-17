@@ -1,0 +1,95 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Bucket S3 Data Lake Bronze - ingestion vers Snowflake via Snowpipe",
+  "Parameters": {
+    "SnowpipeAirQualitySQSArn": {
+      "Type": "String",
+      "Description": "SQS ARN Snowpipe air_quality (obtenu via : SELECT SYSTEM$PIPE_STATUS('BRONZE.AIR_QUALITY.PIPE_AIR_QUALITY'))"
+    },
+    "SnowpipeCoordonneesSQSArn": {
+      "Type": "String",
+      "Description": "SQS ARN Snowpipe coordonnees (obtenu via : SELECT SYSTEM$PIPE_STATUS('BRONZE.AIR_QUALITY.PIPE_COORDONNEES'))"
+    }
+  },
+  "Resources": {
+    "DataLakeBronzeBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "s3-projet-efrei",
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "ArchiveBronzeAfter90Days",
+              "Status": "Enabled",
+              "Transitions": [
+                {
+                  "TransitionInDays": 90,
+                  "StorageClass": "GLACIER"
+                }
+              ]
+            }
+          ]
+        },
+        "NotificationConfiguration": {
+          "QueueConfigurations": [
+            {
+              "Event": "s3:ObjectCreated:*",
+              "Filter": {
+                "S3Key": {
+                  "Rules": [
+                    { "Name": "prefix", "Value": "bronze/air_quality/" }
+                  ]
+                }
+              },
+              "Queue": { "Ref": "SnowpipeAirQualitySQSArn" }
+            },
+            {
+              "Event": "s3:ObjectCreated:*",
+              "Filter": {
+                "S3Key": {
+                  "Rules": [
+                    { "Name": "prefix", "Value": "bronze/coordonnees/" }
+                  ]
+                }
+              },
+              "Queue": { "Ref": "SnowpipeCoordonneesSQSArn" }
+            }
+          ]
+        },
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Layer", "Value": "Bronze" },
+          { "Key": "Environment", "Value": "Dev" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "BucketName": {
+      "Value": { "Ref": "DataLakeBronzeBucket" },
+      "Export": { "Name": "projet-efrei-s3-bucket-name" }
+    },
+    "BucketArn": {
+      "Value": { "Fn::GetAtt": ["DataLakeBronzeBucket", "Arn"] },
+      "Export": { "Name": "projet-efrei-s3-bucket-arn" }
+    }
+  }
+}

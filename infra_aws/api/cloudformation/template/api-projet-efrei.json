@@ -1,0 +1,115 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "API Gateway REST + Cognito Authorizer — NovaSight API",
+
+  "Parameters": {
+    "LambdaApiArn":  { "Type": "String", "Description": "ARN de la Lambda FastAPI" },
+    "UserPoolArn":   { "Type": "String", "Description": "ARN du Cognito User Pool" }
+  },
+
+  "Resources": {
+
+    "RestApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "projet-efrei-api",
+        "Description": "NovaSight Smart City API",
+        "EndpointConfiguration": { "Types": ["REGIONAL"] }
+      }
+    },
+
+    "CognitoAuthorizer": {
+      "Type": "AWS::ApiGateway::Authorizer",
+      "Properties": {
+        "Name": "projet-efrei-cognito-authorizer",
+        "RestApiId": { "Ref": "RestApi" },
+        "Type": "COGNITO_USER_POOLS",
+        "IdentitySource": "method.request.header.Authorization",
+        "ProviderARNs": [ { "Ref": "UserPoolArn" } ]
+      }
+    },
+
+    "ProxyResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "RestApiId": { "Ref": "RestApi" },
+        "ParentId":  { "Fn::GetAtt": ["RestApi", "RootResourceId"] },
+        "PathPart":  "{proxy+}"
+      }
+    },
+
+    "ProxyMethodAny": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId":         { "Ref": "RestApi" },
+        "ResourceId":        { "Ref": "ProxyResource" },
+        "HttpMethod":        "ANY",
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId":      { "Ref": "CognitoAuthorizer" },
+        "Integration": {
+          "Type":                  "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaApiArn}/invocations"
+          }
+        }
+      }
+    },
+
+    "RootMethodGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "RestApiId":         { "Ref": "RestApi" },
+        "ResourceId":        { "Fn::GetAtt": ["RestApi", "RootResourceId"] },
+        "HttpMethod":        "GET",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type":                  "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaApiArn}/invocations"
+          }
+        }
+      }
+    },
+
+    "ApiDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "DependsOn": ["ProxyMethodAny", "RootMethodGet"],
+      "Properties": {
+        "RestApiId": { "Ref": "RestApi" }
+      }
+    },
+
+    "ApiStage": {
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "RestApiId":    { "Ref": "RestApi" },
+        "DeploymentId": { "Ref": "ApiDeployment" },
+        "StageName":    "prod",
+        "MethodSettings": [
+          {
+            "ResourcePath": "/*",
+            "HttpMethod":   "*",
+            "ThrottlingBurstLimit": 50,
+            "ThrottlingRateLimit":  20
+          }
+        ]
+      }
+    }
+  },
+
+  "Outputs": {
+    "ApiUrl": {
+      "Description": "URL de base de l'API (stage prod)",
+      "Value": {
+        "Fn::Sub": "https://${RestApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+      },
+      "Export": { "Name": "projet-efrei-ApiUrl" }
+    },
+    "ApiId": {
+      "Value": { "Ref": "RestApi" },
+      "Export": { "Name": "projet-efrei-ApiId" }
+    }
+  }
+}

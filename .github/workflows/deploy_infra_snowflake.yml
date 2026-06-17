@@ -1,0 +1,50 @@
+name: Deploy Snowflake Infra (Terraform)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra_snowflake
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        env:
+          TF_VAR_snowflake_account:        ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          TF_VAR_snowflake_org:            ${{ secrets.SNOWFLAKE_ORG }}
+          TF_VAR_snowflake_user:           ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_snowflake_password:       ${{ secrets.SNOWFLAKE_PASSWORD }}
+        run: terraform init
+
+      - name: Terraform Plan
+        env:
+          TF_VAR_snowflake_account:        ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          TF_VAR_snowflake_org:            ${{ secrets.SNOWFLAKE_ORG }}
+          TF_VAR_snowflake_user:           ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_snowflake_password:       ${{ secrets.SNOWFLAKE_PASSWORD }}
+          TF_VAR_ingest_user_password:     ${{ secrets.INGEST_USER_PASSWORD }}
+          TF_VAR_transform_user_password:  ${{ secrets.TRANSFORM_USER_PASSWORD }}
+          TF_VAR_analyst_user_password:    ${{ secrets.ANALYST_USER_PASSWORD }}
+        run: terraform plan
+
+      - name: Terraform Apply
+        env:
+          TF_VAR_snowflake_account:        ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          TF_VAR_snowflake_org:            ${{ secrets.SNOWFLAKE_ORG }}
+          TF_VAR_snowflake_user:           ${{ secrets.SNOWFLAKE_USER }}
+          TF_VAR_snowflake_password:       ${{ secrets.SNOWFLAKE_PASSWORD }}
+          TF_VAR_ingest_user_password:     ${{ secrets.INGEST_USER_PASSWORD }}
+          TF_VAR_transform_user_password:  ${{ secrets.TRANSFORM_USER_PASSWORD }}
+          TF_VAR_analyst_user_password:    ${{ secrets.ANALYST_USER_PASSWORD }}
+        run: terraform apply -auto-approve

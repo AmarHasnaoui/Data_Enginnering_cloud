@@ -1,0 +1,26 @@
+name: Deploy Snowflake DDL
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Snowflake/DDL/**'
+  workflow_dispatch:
+
+jobs:
+  run-sql:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install Snowflake Connector
+        run: pip install snowflake-connector-python
+
+      - name: Run DDL scripts
+        env:
+          SNOWFLAKE_ACCOUNT:  ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_PASSWORD: ${{ secrets.INGEST_USER_PASSWORD }}
+        run: python run_ddl.py
