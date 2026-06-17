@@ -66,6 +66,27 @@ resource "snowflake_grant_ownership" "transform_role_silver_owner" {
   }
 }
 
+# --- SYSADMIN : USAGE + CREATE SCHEMA sur BRONZE + SILVER (pour GITHUB_ROLE via héritage) ---
+resource "snowflake_grant_privileges_to_account_role" "sysadmin_bronze_ddl" {
+  depends_on        = [snowflake_grant_ownership.ingest_role_bronze_owner]
+  account_role_name = "SYSADMIN"
+  privileges        = ["USAGE", "CREATE SCHEMA"]
+  on_account_object {
+    object_type = "DATABASE"
+    object_name = snowflake_database.bronze_db.name
+  }
+}
+
+resource "snowflake_grant_privileges_to_account_role" "sysadmin_silver_ddl" {
+  depends_on        = [snowflake_grant_ownership.transform_role_silver_owner]
+  account_role_name = "SYSADMIN"
+  privileges        = ["USAGE", "CREATE SCHEMA"]
+  on_account_object {
+    object_type = "DATABASE"
+    object_name = snowflake_database.silver_db.name
+  }
+}
+
 # --- TRANSFORM_ROLE : USAGE sur BRONZE (après transfert de propriété) ---
 resource "snowflake_grant_privileges_to_account_role" "transform_bronze_usage" {
   depends_on        = [snowflake_grant_ownership.ingest_role_bronze_owner]

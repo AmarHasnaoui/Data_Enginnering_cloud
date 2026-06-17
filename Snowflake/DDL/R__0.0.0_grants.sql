@@ -1,5 +1,4 @@
 -- Grants complets NovaSight — exécuté par GITHUB_ROLE (hérite SECURITYADMIN = MANAGE GRANTS)
--- SYSADMIN conserve ses droits naturels sur BRONZE/SILVER (pas de REVOKE dans le transfert ownership)
 
 -- ══════════════════════════════════════════════════════════════════════
 -- BRONZE  →  DATA_ENGINEER : lecture complète (tous schémas + futurs)
