@@ -19,6 +19,7 @@ jobs:
 
       - name: Run DDL scripts
         env:
+          SNOWFLAKE_ORG:      ${{ secrets.SNOWFLAKE_ORG }}
           SNOWFLAKE_ACCOUNT:  ${{ secrets.SNOWFLAKE_ACCOUNT }}
           SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
         run: python run_ddl.py

@@ -2,10 +2,12 @@ import os
 import glob
 import snowflake.connector
 
+account = f"{os.environ['SNOWFLAKE_ORG']}-{os.environ['SNOWFLAKE_ACCOUNT']}"
+
 conn = snowflake.connector.connect(
     user      = "GITHUB_USER",
     password  = os.environ['SNOWFLAKE_PASSWORD'],
-    account   = os.environ['SNOWFLAKE_ACCOUNT'],
+    account   = account,
     role      = "GITHUB_ROLE",
     warehouse = "TRANSFORM_WH"
 )
