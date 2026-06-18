@@ -35,6 +35,22 @@ TABLES = [
         "date_col": "DATE_JOUR",
         "pk":       ["date_jour"],
     },
+    {
+        "sf_table": "SILVER.ZONES_ADMINISTRATIVES.DM_ZONE_KPI_DAILY",
+        "pg_table": "dm_zone_kpi_daily",
+        "date_col": "DATE_JOUR",
+        "pk":       ["arrondissement_code", "date_jour"],
+    },
+]
+
+# Référentiels statiques : pas de filtre par date, sync complet à chaque run
+# (peu de lignes — 20 arrondissements — donc négligeable en coût).
+REFERENCE_TABLES = [
+    {
+        "sf_table": "SILVER.ZONES_ADMINISTRATIVES.STG_ARRONDISSEMENTS",
+        "pg_table": "ref_arrondissements",
+        "pk":       ["arrondissement_code"],
+    },
 ]
 
 CREATE_STATEMENTS = {
@@ -126,6 +142,36 @@ CREATE_STATEMENTS = {
             updated_at            TIMESTAMP
         )
     """,
+    "dm_zone_kpi_daily": """
+        CREATE TABLE IF NOT EXISTS dm_zone_kpi_daily (
+            arrondissement_code   INTEGER,
+            nom_arrondissement    TEXT,
+            date_jour             DATE,
+            no2_moyen             FLOAT,
+            pm10_moyen            FLOAT,
+            pm25_moyen            FLOAT,
+            pollution_indice_moyen FLOAT,
+            debit_routier_moyen   FLOAT,
+            taux_occupation_moyen FLOAT,
+            total_heures_bloque   INTEGER,
+            total_velos           INTEGER,
+            nb_compteurs_actifs   INTEGER,
+            ratio_mobilite_verte  FLOAT,
+            updated_at            TIMESTAMP,
+            PRIMARY KEY (arrondissement_code, date_jour)
+        )
+    """,
+    "ref_arrondissements": """
+        CREATE TABLE IF NOT EXISTS ref_arrondissements (
+            arrondissement_code INTEGER PRIMARY KEY,
+            code_insee          TEXT,
+            nom_arrondissement  TEXT,
+            surface_m2          FLOAT,
+            centroid_lat        FLOAT,
+            centroid_lon        FLOAT,
+            geometry            TEXT
+        )
+    """,
 }
 
 
@@ -159,6 +205,23 @@ def ensure_tables(pg_conn):
     pg_conn.commit()
 
 
+def upsert_rows(pg_conn, pg_table, pk, sf_cur, rows):
+    if not rows:
+        return 0
+    cols = [desc[0].lower() for desc in sf_cur.description]
+    non_pk = [c for c in cols if c not in pk]
+    update_set = ", ".join(f"{c} = EXCLUDED.{c}" for c in non_pk)
+
+    insert_sql = (
+        f"INSERT INTO {pg_table} ({', '.join(cols)}) VALUES %s "
+        f"ON CONFLICT ({', '.join(pk)}) DO UPDATE SET {update_set}"
+    )
+    with pg_conn.cursor() as cur:
+        execute_values(cur, insert_sql, rows)
+    pg_conn.commit()
+    return len(rows)
+
+
 def export_table(sf_conn, pg_conn, table_def, target_date):
     sf_cur = sf_conn.cursor()
     sf_cur.execute(
@@ -166,23 +229,14 @@ def export_table(sf_conn, pg_conn, table_def, target_date):
         (target_date,),
     )
     rows = sf_cur.fetchall()
-    if not rows:
-        return 0
+    return upsert_rows(pg_conn, table_def["pg_table"], table_def["pk"], sf_cur, rows)
 
-    cols = [desc[0].lower() for desc in sf_cur.description]
-    pk = table_def["pk"]
-    non_pk = [c for c in cols if c not in pk]
-    update_set = ", ".join(f"{c} = EXCLUDED.{c}" for c in non_pk)
 
-    insert_sql = (
-        f"INSERT INTO {table_def['pg_table']} ({', '.join(cols)}) VALUES %s "
-        f"ON CONFLICT ({', '.join(pk)}) DO UPDATE SET {update_set}"
-    )
-
-    with pg_conn.cursor() as cur:
-        execute_values(cur, insert_sql, rows)
-    pg_conn.commit()
-    return len(rows)
+def export_reference_table(sf_conn, pg_conn, table_def):
+    sf_cur = sf_conn.cursor()
+    sf_cur.execute(f"SELECT * FROM {table_def['sf_table']}")
+    rows = sf_cur.fetchall()
+    return upsert_rows(pg_conn, table_def["pg_table"], table_def["pk"], sf_cur, rows)
 
 
 def lambda_handler(event, context):
@@ -200,6 +254,15 @@ def lambda_handler(event, context):
                 n = export_table(sf_conn, pg_conn, table_def, target_date)
                 results[table_def["pg_table"]] = f"{n} rows"
                 print(f"[{table_def['pg_table']}] {n} lignes upsertées")
+            except Exception as e:
+                results[table_def["pg_table"]] = f"ERROR: {e}"
+                print(f"[{table_def['pg_table']}] ERREUR: {e}")
+
+        for table_def in REFERENCE_TABLES:
+            try:
+                n = export_reference_table(sf_conn, pg_conn, table_def)
+                results[table_def["pg_table"]] = f"{n} rows (référentiel)"
+                print(f"[{table_def['pg_table']}] {n} lignes upsertées (référentiel)")
             except Exception as e:
                 results[table_def["pg_table"]] = f"ERROR: {e}"
                 print(f"[{table_def['pg_table']}] ERREUR: {e}")

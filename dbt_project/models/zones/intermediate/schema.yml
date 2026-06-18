@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_air_quality_zoned
+    description: "Mesures qualité de l'air jointes spatialement à leur arrondissement parisien."
+    columns:
+      - name: arrondissement_code
+        tests: [not_null]
+      - name: date_jour
+        tests: [not_null]
+
+  - name: int_trafic_zoned
+    description: "Trafic routier journalier joint spatialement à son arrondissement parisien."
+    columns:
+      - name: arrondissement_code
+        tests: [not_null]
+      - name: date_jour
+        tests: [not_null]
+
+  - name: int_velo_zoned
+    description: "Trafic vélo (compteurs) journalier joint spatialement à son arrondissement parisien."
+    columns:
+      - name: arrondissement_code
+        tests: [not_null]
+      - name: date_jour
+        tests: [not_null]
