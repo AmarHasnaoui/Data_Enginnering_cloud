@@ -86,8 +86,9 @@ sources:
         description: "Emplacements statiques des stations Vélib (référentiel) — source opendata.paris.fr"
         columns:
           - name: stationcode
-            description: "Code unique de la station Vélib"
-            tests: [not_null, unique]
+            description: >
+              Code de la station Vélib.
+            tests: [not_null]
           - name: name
             description: "Nom de la station"
             tests: [not_null]

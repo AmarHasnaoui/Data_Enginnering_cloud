@@ -13,11 +13,11 @@ models:
       - name: type_implantation
         description: "Type d'environnement du capteur (Urbaine, Trafic, Industrielle...)"
       - name: polluant
-        description: "Polluant mesuré (NO2, PM10, PM2.5, O3, SO2, CO, C6H6)"
+        description: "Polluant mesuré (NO2, PM10, PM2.5, O3, SO2, CO, C6H6 , NO et NOX as NO2"
         tests:
           - not_null
           - accepted_values:
-              values: ['NO2', 'PM10', 'PM2.5', 'O3', 'SO2', 'CO', 'C6H6']
+              values: ['NO2', 'PM10', 'PM2.5', 'O3', 'SO2', 'CO', 'C6H6', 'NO', 'NOX as NO2']
       - name: unite_mesure
         description: "Unité de la mesure (µg/m3, mg/m3...)"
         tests: [not_null]
