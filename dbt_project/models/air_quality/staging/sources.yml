@@ -32,7 +32,7 @@ sources:
             description: "Type d'environnement du capteur (Urbaine, Périurbaine, Industrielle, Trafic...)"
             tests:
               - accepted_values:
-                  values: ['Urbaine', 'Périurbaine', 'Rurale', 'Industrielle', 'Trafic', 'Station de fond']
+                  values: ['Urbaine', 'Périurbaine', 'Rurale nationale', 'Rurale près des villes', 'Rurale régionale']
                   severity: warn
           - name: polluant
             description: "Polluant mesuré (NO2, PM10, PM2.5, O3, SO2, CO, C6H6...)"
@@ -65,7 +65,7 @@ sources:
             description: "Code qualité de la mesure (A = valide, B = non-valide, C = incertain)"
             tests:
               - accepted_values:
-                  values: ['A', 'B', 'C', 'D', '1', '2', '3']
+                  values: ['A', 'N', 'R']
                   severity: warn
           - name: validite
             description: "Indicateur de validité numérique (1 = valide, -1 = non valide)"
