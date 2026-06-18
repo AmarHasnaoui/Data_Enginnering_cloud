@@ -36,8 +36,8 @@ def lambda_handler(event, context):
         try_str   = try_date.strftime("%Y-%m-%d")
         try_year  = try_date.year
         air_url = (
-            "https://object.infra.data.gouv.fr/api/v1/buckets/ineris-prod/objects/download?prefix="
-            f"lcsqa/concentrations-de-polluants-atmospheriques-reglementes/temps-reel/{try_year}/FR_E2_{try_str}.csv"
+            "https://files.data.gouv.fr/ineris/lcsqa/"
+            f"concentrations-de-polluants-atmospheriques-reglementes/temps-reel/{try_year}/FR_E2_{try_str}.csv"
         )
         print(f"[air_quality] GET {air_url}")
         r = requests.get(air_url, timeout=60)

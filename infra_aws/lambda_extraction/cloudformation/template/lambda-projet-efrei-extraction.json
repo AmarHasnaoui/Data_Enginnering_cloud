@@ -16,7 +16,7 @@
           "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/projet-efrei-role"
         },
         "Timeout": 300,
-        "MemorySize": 256,
+        "MemorySize": 1024,
         "Environment": {
           "Variables": {
             "BUCKET": "s3-projet-efrei"
