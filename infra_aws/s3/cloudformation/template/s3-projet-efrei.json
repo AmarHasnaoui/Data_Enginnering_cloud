@@ -76,7 +76,7 @@
           ]
         },
         "NotificationConfiguration": {
-          "EventBridgeConfiguration": {},
+          "EventBridgeConfiguration": { "EventBridgeEnabled": true },
           "QueueConfigurations": {
             "Fn::If": [
               "HasSnowpipeNotifications",
