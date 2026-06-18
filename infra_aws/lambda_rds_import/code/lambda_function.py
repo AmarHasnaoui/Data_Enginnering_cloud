@@ -14,7 +14,8 @@ TABLE_KEYS = {
 
 
 def get_pg_conn():
-    return psycopg2.connect(
+    print(f"Connexion à {os.environ['RDS_HOST']}:{os.environ.get('RDS_PORT', 5432)}...")
+    conn = psycopg2.connect(
         host=os.environ["RDS_HOST"],
         port=int(os.environ.get("RDS_PORT", 5432)),
         dbname=os.environ["RDS_DATABASE"],
@@ -22,18 +23,25 @@ def get_pg_conn():
         password=os.environ["RDS_PASSWORD"],
         sslmode="require",
         connect_timeout=10,
+        options="-c statement_timeout=30000",
     )
+    print("Connecté.")
+    return conn
 
 
 def ensure_setup(pg_conn):
+    print("CREATE EXTENSION aws_s3...")
     with pg_conn.cursor() as cur:
         cur.execute("CREATE EXTENSION IF NOT EXISTS aws_s3 CASCADE;")
     pg_conn.commit()
+    print("Extension OK.")
 
 
 def import_table(pg_conn, pg_table, bucket, key, region):
     with pg_conn.cursor() as cur:
+        print(f"TRUNCATE {pg_table}...")
         cur.execute(f"TRUNCATE TABLE {pg_table};")
+        print(f"Import depuis s3://{bucket}/{key}...")
         cur.execute(
             "SELECT aws_s3.table_import_from_s3("
             "%s, '', '(format csv, header true)', "
@@ -41,6 +49,7 @@ def import_table(pg_conn, pg_table, bucket, key, region):
             (pg_table, bucket, key, region),
         )
     pg_conn.commit()
+    print("Import OK.")
 
 
 def lambda_handler(event, context):
