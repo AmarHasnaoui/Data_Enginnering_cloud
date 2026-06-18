@@ -17,7 +17,7 @@ WITH air AS (
     FROM {{ ref('dm_air_quality_daily') }}
 
     {% if is_incremental() %}
-    WHERE date_mesure > (SELECT MAX(date_jour) FROM {{ this }})
+    WHERE date_mesure > (SELECT COALESCE(MAX(date_jour), '1970-01-01') FROM {{ this }})
     {% endif %}
 
     GROUP BY date_mesure
@@ -30,7 +30,7 @@ alertes AS (
     FROM {{ ref('dm_alertes_pollution') }}
 
     {% if is_incremental() %}
-    WHERE date_mesure > (SELECT MAX(date_jour) FROM {{ this }})
+    WHERE date_mesure > (SELECT COALESCE(MAX(date_jour), '1970-01-01') FROM {{ this }})
     {% endif %}
 
     GROUP BY date_mesure
@@ -46,7 +46,7 @@ trafic AS (
     FROM {{ ref('dm_trafic_routier_daily') }}
 
     {% if is_incremental() %}
-    WHERE date_jour > (SELECT MAX(date_jour) FROM {{ this }})
+    WHERE date_jour > (SELECT COALESCE(MAX(date_jour), '1970-01-01') FROM {{ this }})
     {% endif %}
 
     GROUP BY date_jour
@@ -60,7 +60,7 @@ velo AS (
     FROM {{ ref('dm_velo_daily') }}
 
     {% if is_incremental() %}
-    WHERE date_jour > (SELECT MAX(date_jour) FROM {{ this }})
+    WHERE date_jour > (SELECT COALESCE(MAX(date_jour), '1970-01-01') {{ this }})
     {% endif %}
 
     GROUP BY date_jour
