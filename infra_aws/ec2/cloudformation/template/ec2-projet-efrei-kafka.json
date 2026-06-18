@@ -65,7 +65,7 @@
     "KafkaEC2": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
-        "InstanceType": "t2.micro",
+        "InstanceType": "t3.small",
         "KeyName": { "Ref": "KeyName" },
         "ImageId": { "Ref": "ImageId" },
         "IamInstanceProfile": { "Ref": "EC2InstanceProfile" },
