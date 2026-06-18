@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda d'extraction API LCSQA → S3 Bronze",
+  "Description": "Lambda d'extraction API LCSQA S3 Bronze",
   "Resources": {
     "ExtractionLambdaFunction": {
       "Type": "AWS::Lambda::Function",

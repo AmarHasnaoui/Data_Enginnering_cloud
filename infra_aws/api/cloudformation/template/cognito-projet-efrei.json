@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Cognito User Pool — authentification NovaSight API",
+  "Description": "Cognito User Pool authentification NovaSight API",
 
   "Resources": {
 

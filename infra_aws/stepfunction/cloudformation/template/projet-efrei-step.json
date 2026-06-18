@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Step Function - pipeline extraction air quality vers S3 Bronze",
+  "Description": "Step Function pipeline extraction air quality vers S3 Bronze",
   "Resources": {
     "AirQualityStateMachine": {
       "Type": "AWS::StepFunctions::StateMachine",

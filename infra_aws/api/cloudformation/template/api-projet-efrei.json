@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "API Gateway REST + Cognito Authorizer — NovaSight API",
+  "Description": "API Gateway REST Cognito Authorizer API",
 
   "Parameters": {
     "LambdaApiArn":  { "Type": "String", "Description": "ARN de la Lambda FastAPI" },

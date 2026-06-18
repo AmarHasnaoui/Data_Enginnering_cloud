@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "EC2 t2.micro Kafka — producer Velib API → consumer DynamoDB",
+  "Description": "EC2 t3.small Kafka producer Velib API consumer DynamoDB",
   "Parameters": {
     "KeyName": {
       "Type": "AWS::EC2::KeyPair::KeyName",

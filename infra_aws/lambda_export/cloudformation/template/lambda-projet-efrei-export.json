@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda export Silver→RDS + EventBridge 09:00 UTC (10:00 Paris hiver)",
+  "Description": "Lambda export Silver→RDS EventBridge 09:00 UTC (10:00 Paris hiver)",
   "Parameters": {
     "SnowflakeOrg": {
       "Type": "String",

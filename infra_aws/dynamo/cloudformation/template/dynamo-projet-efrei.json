@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "DynamoDB velib_realtime — état courant des stations Vélib (last known state)",
+  "Description": "DynamoDB velib_realtime état courant des stations Vélib (last known state)",
   "Resources": {
     "VelibRealtimeTable": {
       "Type": "AWS::DynamoDB::Table",

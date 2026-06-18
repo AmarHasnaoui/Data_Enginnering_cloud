@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda FastAPI NovaSight — serving layer Gold PostgreSQL",
+  "Description": "Lambda FastAPI NovaSight serving layer Gold PostgreSQL",
 
   "Parameters": {
     "LambdaS3Bucket": { "Type": "String", "Description": "Bucket S3 contenant le zip Lambda" },

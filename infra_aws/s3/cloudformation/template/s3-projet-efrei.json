@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Bucket S3 Data Lake Bronze - ingestion vers Snowflake via Snowpipe",
+  "Description": "Bucket S3 Data Lake Bronze ingestion vers Snowflake via Snowpipe",
   "Parameters": {
     "SnowpipeAirQualitySQSArn": {
       "Type": "String",

@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "RDS Postgres Gold - réception données Silver depuis Lambda export",
+  "Description": "RDS Postgres Gold réception données Silver depuis Lambda export",
   "Parameters": {
     "DBPassword": {
       "Type": "String",
@@ -57,7 +57,7 @@
         "PubliclyAccessible": true,
         "DBSubnetGroupName": { "Ref": "RDSSubnetGroup" },
         "VPCSecurityGroups": [{ "Fn::GetAtt": ["RDSSecurityGroup", "GroupId"] }],
-        "BackupRetentionPeriod": 7,
+        "BackupRetentionPeriod": 0,
         "DeletionProtection": false,
         "Tags": [
           { "Key": "Project", "Value": "ProjetEfrei" },
