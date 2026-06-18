@@ -25,6 +25,12 @@ def lambda_handler(event, context):
     BUCKET = os.environ.get("BUCKET", "s3-projet-efrei")
     results = {}
 
+    # Heure/minute d'exécution : chemin S3 unique par run pour que Snowpipe
+    # ne saute pas un fichier déjà chargé sous le même chemin (ré-exécution)
+    RUN_TIME = datetime.utcnow()
+    HOUR     = f"{RUN_TIME.hour:02d}"
+    MINUTE   = f"{RUN_TIME.minute:02d}"
+
     # ─────────────────────────────────────────────────────────
     # 1. QUALITÉ DE L'AIR (LCSQA / INERIS)
     # Le fichier J-1 n'est pas toujours publié à temps (délai de validation
@@ -42,7 +48,7 @@ def lambda_handler(event, context):
         print(f"[air_quality] GET {air_url}")
         r = requests.get(air_url, timeout=60)
         if r.status_code == 200:
-            key = f"bronze/air_quality/{try_year}/{try_date.month:02d}/{try_date.day:02d}/FR_E2_{try_str}.csv"
+            key = f"bronze/air_quality/{try_year}/{try_date.month:02d}/{try_date.day:02d}/{HOUR}/{MINUTE}/FR_E2_{try_str}.csv"
             s3.put_object(Bucket=BUCKET, Key=key, Body=r.content, ContentType="text/csv")
             results["air_quality"] = f"s3://{BUCKET}/{key} (J-{lag})"
             print(f"[air_quality] OK → {key} (J-{lag})")
@@ -66,7 +72,7 @@ def lambda_handler(event, context):
     print(f"[velo] GET {velo_url}")
     r = requests.get(velo_url, timeout=120)
     if r.status_code == 200:
-        key = f"bronze/velo_counts/{YEAR}/{MONTH}/{DAY}/comptage_velo_{DATE_STR}.csv"
+        key = f"bronze/velo_counts/{YEAR}/{MONTH}/{DAY}/{HOUR}/{MINUTE}/comptage_velo_{DATE_STR}.csv"
         s3.put_object(Bucket=BUCKET, Key=key, Body=r.content, ContentType="text/csv")
         results["velo_counts"] = f"s3://{BUCKET}/{key}"
         print(f"[velo] OK → {key}")
@@ -85,7 +91,7 @@ def lambda_handler(event, context):
     print(f"[trafic] GET {trafic_url}")
     r = requests.get(trafic_url, timeout=120)
     if r.status_code == 200:
-        key = f"bronze/traffic_counts/{YEAR}/{MONTH}/{DAY}/comptage_trafic_{DATE_STR}.csv"
+        key = f"bronze/traffic_counts/{YEAR}/{MONTH}/{DAY}/{HOUR}/{MINUTE}/comptage_trafic_{DATE_STR}.csv"
         s3.put_object(Bucket=BUCKET, Key=key, Body=r.content, ContentType="text/csv")
         results["traffic_counts"] = f"s3://{BUCKET}/{key}"
         print(f"[trafic] OK → {key}")
@@ -103,7 +109,7 @@ def lambda_handler(event, context):
     print(f"[stations] GET {stations_url}")
     r = requests.get(stations_url, timeout=60)
     if r.status_code == 200:
-        key = f"bronze/stations/{YEAR}/{MONTH}/{DAY}/stations_{DATE_STR}.json"
+        key = f"bronze/stations/{YEAR}/{MONTH}/{DAY}/{HOUR}/{MINUTE}/stations_{DATE_STR}.json"
         s3.put_object(Bucket=BUCKET, Key=key, Body=r.content, ContentType="application/json")
         results["stations"] = f"s3://{BUCKET}/{key}"
         print(f"[stations] OK → {key}")
