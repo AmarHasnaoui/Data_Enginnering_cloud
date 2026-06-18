@@ -12,7 +12,8 @@ CREATE OR REPLACE FILE FORMAT my_csv_export_format
   FIELD_DELIMITER               = ','
   FIELD_OPTIONALLY_ENCLOSED_BY  = '"'
   EMPTY_FIELD_AS_NULL           = TRUE
-  COMPRESSION                   = NONE;
+  COMPRESSION                   = NONE
+  NULL_IF                       = ('');
 
 USE ROLE GITHUB_ROLE;
 -- s3_integration (créée en R__1.1.4) n'autorisait que bronze/ : on étend son
@@ -35,7 +36,8 @@ CREATE OR REPLACE FILE FORMAT my_csv_export_format
   FIELD_DELIMITER               = ','
   FIELD_OPTIONALLY_ENCLOSED_BY  = '"'
   EMPTY_FIELD_AS_NULL           = TRUE
-  COMPRESSION                   = NONE;
+  COMPRESSION                   = NONE
+  NULL_IF                       = ('');
 
 CREATE OR REPLACE PROCEDURE SP_EXPORT_GOLD_TO_S3()
 RETURNS STRING
