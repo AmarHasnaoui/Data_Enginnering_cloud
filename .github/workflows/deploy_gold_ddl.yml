@@ -1,11 +1,10 @@
 name: Deploy Gold DDL (Snowflake Postgres)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'Snowflake/GOLD_DDL/**'
-      - 'run_gold_ddl.py'
+  # push:
+  #   branches:
+  #     - dev_amar
+  workflow_dispatch:
 
 jobs:
   deploy-gold-ddl:

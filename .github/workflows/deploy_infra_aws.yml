@@ -1,9 +1,9 @@
 name: Deploy infra AWS
 
 on:
-  push:
-    branches:
-      - dev_amar
+  # push:
+  #   branches:
+  #     - dev_amar
   workflow_dispatch:
 
 jobs:
@@ -114,31 +114,29 @@ jobs:
           aws cloudformation deploy \
             --stack-name projet-efrei-rds \
             --template-file infra_aws/rds/cloudformation/template/rds-projet-efrei.json \
+            --capabilities CAPABILITY_IAM \
             --parameter-overrides \
               DBPassword=${{ secrets.RDS_PASSWORD }} \
               VpcId=$VPC_ID \
               SubnetIds=$SUBNET_IDS \
             --no-fail-on-empty-changeset
 
-      # --- Lambda Export Silver → RDS ---
-      - name: Zip Lambda export
+      # --- Lambda trigger RDS import (S3 gold_export/*.csv > EventBridge > aws_s3) ---
+      - name: Zip Lambda RDS import
         run: |
-          cd infra_aws/lambda_export/code
-          pip install snowflake-connector-python psycopg2-binary -t .
-          zip -r ../../../export.zip .
+          cd infra_aws/lambda_rds_import/code
+          pip install psycopg2-binary -t .
+          zip -r ../../../rds_import.zip .
 
-      - name: Upload export zip to S3
-        run: aws s3 cp export.zip s3://s3-projet-efrei/lambda/export.zip
+      - name: Upload RDS import zip to S3
+        run: aws s3 cp rds_import.zip s3://s3-projet-efrei/lambda/rds_import.zip
 
-      - name: Deploy Lambda export stack
+      - name: Deploy Lambda RDS import stack
         run: |
           aws cloudformation deploy \
-            --stack-name projet-efrei-export \
-            --template-file infra_aws/lambda_export/cloudformation/template/lambda-projet-efrei-export.json \
+            --stack-name projet-efrei-rds-import \
+            --template-file infra_aws/lambda_rds_import/cloudformation/template/lambda-projet-efrei-rds-import.json \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --parameter-overrides \
-              SnowflakeOrg=${{ secrets.SNOWFLAKE_ORG }} \
-              SnowflakeAccount=${{ secrets.SNOWFLAKE_ACCOUNT }} \
-              TransformUserPassword=${{ secrets.TRANSFORM_USER_PASSWORD }} \
               RDSPassword=${{ secrets.RDS_PASSWORD }} \
             --no-fail-on-empty-changeset

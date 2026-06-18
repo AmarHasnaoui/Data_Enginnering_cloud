@@ -63,6 +63,44 @@ class TraficRow(BaseModel):
 
 
 
+class ZoneKpiRow(BaseModel):
+    arrondissement_code:    Optional[int]
+    nom_arrondissement:     Optional[str]
+    date_jour:              Optional[date]
+    no2_moyen:               Optional[float]
+    pm10_moyen:              Optional[float]
+    pm25_moyen:              Optional[float]
+    pollution_indice_moyen: Optional[float]
+    debit_routier_moyen:    Optional[float]
+    taux_occupation_moyen:  Optional[float]
+    total_heures_bloque:    Optional[int]
+    total_velos:            Optional[int]
+    nb_compteurs_actifs:    Optional[int]
+    ratio_mobilite_verte:   Optional[float]
+
+
+class ArrondissementRow(BaseModel):
+    arrondissement_code: Optional[int]
+    code_insee:          Optional[str]
+    nom_arrondissement:  Optional[str]
+    surface_m2:          Optional[float]
+    centroid_lat:        Optional[float]
+    centroid_lon:        Optional[float]
+    geometry:            Optional[str]
+
+
+class VelibStationRow(BaseModel):
+    stationId:                   Optional[str]
+    timestamp:                   Optional[str]
+    num_bikes_available:         Optional[int]
+    num_docks_available:         Optional[int]
+    mechanical:                  Optional[int]
+    ebike:                       Optional[int]
+    nom_arrondissement_communes: Optional[str]
+    latitude:                    Optional[float]
+    longitude:                   Optional[float]
+
+
 class KpiRow(BaseModel):
     date_jour:             Optional[date]
     no2_moyen:             Optional[float]

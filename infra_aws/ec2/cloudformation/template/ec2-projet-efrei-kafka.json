@@ -39,7 +39,7 @@
               {
                 "Effect": "Allow",
                 "Action": ["dynamodb:PutItem", "dynamodb:UpdateItem"],
-                "Resource": { "Fn::Sub": "arn:aws:dynamodb:eu-west-3:${AWS::AccountId}:table/novasight_velib_realtime" }
+                "Resource": { "Fn::Sub": "arn:aws:dynamodb:eu-west-3:${AWS::AccountId}:table/velib_realtime" }
               }
             ]
           }
@@ -76,7 +76,7 @@
         }],
         "UserData": {
           "Fn::Base64": {
-            "Fn::Sub": "#!/bin/bash\napt-get update -y\napt-get install -y awscli\nexport S3_BUCKET=s3-projet-efrei\nexport DYNAMO_TABLE=novasight_velib_realtime\naws s3 cp s3://s3-projet-efrei/ec2/setup.sh /tmp/setup.sh\nchmod +x /tmp/setup.sh\nbash /tmp/setup.sh > /tmp/setup.log 2>&1\n"
+            "Fn::Sub": "#!/bin/bash\napt-get update -y\napt-get install -y unzip curl\ncurl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip\nunzip -q /tmp/awscliv2.zip -d /tmp\n/tmp/aws/install\nexport S3_BUCKET=s3-projet-efrei\nexport DYNAMO_TABLE=velib_realtime\naws s3 cp s3://s3-projet-efrei/ec2/setup.sh /tmp/setup.sh\nchmod +x /tmp/setup.sh\nbash /tmp/setup.sh > /tmp/setup.log 2>&1\n"
           }
         },
         "Tags": [{ "Key": "Name", "Value": "novasight-kafka-ec2" }]

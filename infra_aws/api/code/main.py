@@ -1,14 +1,15 @@
 from datetime import date
 from typing import Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from db import query
+from db_dynamo import get_station, list_stations
 from models import (
     AirQualityRow, AlerteRow, VeloRow,
-    TraficRow, KpiRow,
+    TraficRow, KpiRow, ZoneKpiRow, ArrondissementRow, VelibStationRow,
 )
 
 app = FastAPI(
@@ -137,6 +138,49 @@ def get_trafic(
         params.append(arc_id)
     params.append(limit)
     return query(f"SELECT * FROM dm_trafic_routier_daily {where} ORDER BY date_jour DESC LIMIT %s", tuple(params))
+
+
+# ─────────────────────────────────────────────────────────
+# Zones administratives (arrondissements Paris)
+# ─────────────────────────────────────────────────────────
+@app.get("/zones/kpi", response_model=list[ZoneKpiRow], tags=["Zones"])
+def get_zone_kpi(
+    date_start:           Optional[date] = Query(None),
+    date_end:             Optional[date] = Query(None),
+    arrondissement_code:  Optional[int]  = Query(None),
+    limit:                int            = Query(100, ge=1, le=1000),
+):
+    where, params = date_clause("date_jour", date_start, date_end)
+    if arrondissement_code:
+        connector = "AND" if where else "WHERE"
+        where += f" {connector} arrondissement_code = %s"
+        params.append(arrondissement_code)
+    params.append(limit)
+    return query(f"SELECT * FROM dm_zone_kpi_daily {where} ORDER BY date_jour DESC LIMIT %s", tuple(params))
+
+
+@app.get("/zones/arrondissements", response_model=list[ArrondissementRow], tags=["Zones"])
+def get_arrondissements():
+    return query("SELECT * FROM ref_arrondissements ORDER BY arrondissement_code")
+
+
+# ─────────────────────────────────────────────────────────
+# Mobilité — Vélib temps réel (DynamoDB, hors Snowflake)
+# ─────────────────────────────────────────────────────────
+@app.get("/mobilite/velib", response_model=list[VelibStationRow], tags=["Mobilité"])
+def get_velib_stations(
+    arrondissement: Optional[str] = Query(None, description="Ex: Paris 15e Arrondissement"),
+    limit:          int           = Query(100, ge=1, le=1500),
+):
+    return list_stations(arrondissement=arrondissement, limit=limit)
+
+
+@app.get("/mobilite/velib/{station_id}", response_model=VelibStationRow, tags=["Mobilité"])
+def get_velib_station(station_id: str):
+    station = get_station(station_id)
+    if not station:
+        raise HTTPException(status_code=404, detail="Station inconnue")
+    return station
 
 
 # ─────────────────────────────────────────────────────────

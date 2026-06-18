@@ -76,10 +76,11 @@
           ]
         },
         "NotificationConfiguration": {
-          "Fn::If": [
-            "HasSnowpipeNotifications",
-            {
-              "QueueConfigurations": [
+          "EventBridgeConfiguration": { "EventBridgeEnabled": true },
+          "QueueConfigurations": {
+            "Fn::If": [
+              "HasSnowpipeNotifications",
+              [
                 {
                   "Event": "s3:ObjectCreated:*",
                   "Filter": {
@@ -125,10 +126,10 @@
                   },
                   "Queue": { "Ref": "SnowpipeStationsVelibSQSArn" }
                 }
-              ]
-            },
-            { "Ref": "AWS::NoValue" }
-          ]
+              ],
+              { "Ref": "AWS::NoValue" }
+            ]
+          }
         },
         "Tags": [
           { "Key": "Project", "Value": "ProjetEfrei" },

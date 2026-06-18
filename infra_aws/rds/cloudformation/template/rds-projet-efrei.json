@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "RDS Postgres Gold réception données Silver depuis Lambda export",
+  "Description": "RDS Postgres Gold, import natif depuis S3 via extension aws_s3 (rôle s3Import)",
   "Parameters": {
     "DBPassword": {
       "Type": "String",
@@ -17,6 +17,41 @@
     }
   },
   "Resources": {
+    "RDSS3ImportRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": "rds.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "Policies": [{
+          "PolicyName": "rds-s3-import-gold-export",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "S3ListGoldExport",
+                "Effect": "Allow",
+                "Action": ["s3:ListBucket"],
+                "Resource": "arn:aws:s3:::s3-projet-efrei",
+                "Condition": { "StringLike": { "s3:prefix": "gold_export/*" } }
+              },
+              {
+                "Sid": "S3ReadGoldExport",
+                "Effect": "Allow",
+                "Action": ["s3:GetObject"],
+                "Resource": "arn:aws:s3:::s3-projet-efrei/gold_export/*"
+              }
+            ]
+          }
+        }],
+        "Tags": [{ "Key": "Project", "Value": "ProjetEfrei" }]
+      }
+    },
     "RDSSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
@@ -56,6 +91,12 @@
         "PubliclyAccessible": true,
         "DBSubnetGroupName": { "Ref": "RDSSubnetGroup" },
         "VPCSecurityGroups": [{ "Fn::GetAtt": ["RDSSecurityGroup", "GroupId"] }],
+        "AssociatedRoles": [
+          {
+            "FeatureName": "s3Import",
+            "RoleArn": { "Fn::GetAtt": ["RDSS3ImportRole", "Arn"] }
+          }
+        ],
         "BackupRetentionPeriod": 0,
         "DeletionProtection": false,
         "Tags": [

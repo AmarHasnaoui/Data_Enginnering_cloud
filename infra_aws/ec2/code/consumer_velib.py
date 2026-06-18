@@ -6,7 +6,7 @@ from decimal import Decimal
 
 TOPIC             = "velib.realtime"
 BOOTSTRAP_SERVERS = "localhost:9092"
-DYNAMO_TABLE      = os.environ.get("DYNAMO_TABLE", "novasight_velib_realtime")
+DYNAMO_TABLE      = os.environ.get("DYNAMO_TABLE", "velib_realtime")
 
 dynamodb = boto3.resource("dynamodb", region_name="eu-west-3")
 table    = dynamodb.Table(DYNAMO_TABLE)

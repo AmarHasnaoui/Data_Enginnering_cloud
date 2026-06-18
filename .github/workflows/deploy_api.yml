@@ -1,10 +1,9 @@
 name: Deploy API (FastAPI + Cognito + API Gateway)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'infra_aws/api/**'
+  # push:
+  #   branches:
+  #     - dev_amar
   workflow_dispatch:
 
 env:
