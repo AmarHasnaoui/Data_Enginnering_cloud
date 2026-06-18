@@ -8,7 +8,7 @@ from mangum import Mangum
 from db import query
 from models import (
     AirQualityRow, AlerteRow, VeloRow,
-    TraficRow, StationVelibRow, KpiRow,
+    TraficRow, KpiRow,
 )
 
 app = FastAPI(
@@ -137,25 +137,6 @@ def get_trafic(
         params.append(arc_id)
     params.append(limit)
     return query(f"SELECT * FROM dm_trafic_routier_daily {where} ORDER BY date_jour DESC LIMIT %s", tuple(params))
-
-
-# ─────────────────────────────────────────────────────────
-# Mobilité — Stations Vélib
-# ─────────────────────────────────────────────────────────
-@app.get("/mobilite/stations-velib", response_model=list[StationVelibRow], tags=["Mobilité"])
-def get_stations_velib(
-    date_start:  Optional[date] = Query(None),
-    date_end:    Optional[date] = Query(None),
-    stationcode: Optional[str]  = Query(None),
-    limit:       int            = Query(100, ge=1, le=1000),
-):
-    where, params = date_clause("date_jour", date_start, date_end)
-    if stationcode:
-        connector = "AND" if where else "WHERE"
-        where += f" {connector} stationcode = %s"
-        params.append(stationcode)
-    params.append(limit)
-    return query(f"SELECT * FROM dm_stations_velib {where} ORDER BY date_jour DESC LIMIT %s", tuple(params))
 
 
 # ─────────────────────────────────────────────────────────

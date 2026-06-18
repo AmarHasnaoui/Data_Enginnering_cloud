@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: int_air_quality_idf
+    description: >
+      Mesures qualité de l'air filtrées sur les stations Île-de-France,
+      enrichies des coordonnées géographiques (jointure stg_coordonnees).
+    columns:
+      - name: code_site
+        tests:
+          - not_null
+      - name: polluant
+        tests:
+          - not_null
+      - name: date_mesure
+        description: Date de mesure (DATE(date_debut)), utilisée comme grain journalier par les marts.
+        tests:
+          - not_null
+      - name: latitude
+        tests:
+          - not_null
+      - name: longitude
+        tests:
+          - not_null

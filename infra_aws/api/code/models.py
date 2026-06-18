@@ -62,21 +62,6 @@ class TraficRow(BaseModel):
     longitude:             Optional[float]
 
 
-class StationVelibRow(BaseModel):
-    stationcode:                 Optional[str]
-    nom_station:                 Optional[str]
-    capacite:                    Optional[int]
-    latitude:                    Optional[float]
-    longitude:                   Optional[float]
-    nom_arrondissement_communes: Optional[str]
-    code_insee_commune:          Optional[str]
-    date_jour:                   Optional[date]
-    velos_dispo_moyen:           Optional[float]
-    places_dispo_moyen:          Optional[float]
-    velos_meca_moyen:            Optional[float]
-    velos_elec_moyen:            Optional[float]
-    nb_releves:                  Optional[int]
-
 
 class KpiRow(BaseModel):
     date_jour:             Optional[date]

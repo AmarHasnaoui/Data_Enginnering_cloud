@@ -110,28 +110,3 @@ sources:
             description: "Timestamp de chargement Snowpipe"
             tests: [not_null]
 
-      - name: RAW_VELIB_REALTIME
-        description: "Export quotidien des données temps réel Vélib depuis DynamoDB (via Lambda export → S3)"
-        columns:
-          - name: station_id
-            description: "Code de la station Vélib (FK vers RAW_STATIONS_VELIB.stationcode)"
-            tests: [not_null]
-          - name: timestamp_ingestion
-            description: "Timestamp de la mesure temps réel (brut VARCHAR)"
-            tests: [not_null]
-          - name: num_bikes_available
-            description: "Nombre de vélos disponibles au moment de la mesure"
-          - name: num_docks_available
-            description: "Nombre de places disponibles"
-          - name: mechanical
-            description: "Nombre de vélos mécaniques disponibles"
-          - name: ebike
-            description: "Nombre de vélos électriques disponibles"
-          - name: nom_arrondissement_communes
-            description: "Arrondissement/commune de la station"
-          - name: _file_name
-            description: "Fichier S3 source"
-            tests: [not_null]
-          - name: _loaded_at
-            description: "Timestamp de chargement Snowpipe"
-            tests: [not_null]

@@ -30,12 +30,6 @@ TABLES = [
         "pk":       ["arc_id", "date_jour"],
     },
     {
-        "sf_table": "SILVER.MOBILITE.DM_STATIONS_VELIB",
-        "pg_table": "dm_stations_velib",
-        "date_col": "DATE_JOUR",
-        "pk":       ["stationcode", "date_jour"],
-    },
-    {
         "sf_table": "SILVER.SMARTCITY.DM_SMARTCITY_KPI_DAILY",
         "pg_table": "dm_smartcity_kpi_daily",
         "date_col": "DATE_JOUR",
@@ -113,25 +107,6 @@ CREATE_STATEMENTS = {
             longitude             FLOAT,
             updated_at            TIMESTAMP,
             PRIMARY KEY (arc_id, date_jour)
-        )
-    """,
-    "dm_stations_velib": """
-        CREATE TABLE IF NOT EXISTS dm_stations_velib (
-            stationcode                  TEXT,
-            nom_station                  TEXT,
-            capacite                     INTEGER,
-            latitude                     FLOAT,
-            longitude                    FLOAT,
-            nom_arrondissement_communes  TEXT,
-            code_insee_commune           TEXT,
-            date_jour                    DATE,
-            velos_dispo_moyen            FLOAT,
-            places_dispo_moyen           FLOAT,
-            velos_meca_moyen             FLOAT,
-            velos_elec_moyen             FLOAT,
-            nb_releves                   INTEGER,
-            updated_at                   TIMESTAMP,
-            PRIMARY KEY (stationcode, date_jour)
         )
     """,
     "dm_smartcity_kpi_daily": """
