@@ -23,5 +23,5 @@ SELECT
 FROM {{ ref('int_trafic_daily') }}
 
 {% if is_incremental() %}
-WHERE date_jour > (SELECT MAX(date_jour) FROM {{ this }})
+WHERE date_jour > (SELECT COALESCE(MAX(date_jour), '1970-01-01') FROM {{ this }})
 {% endif %}
