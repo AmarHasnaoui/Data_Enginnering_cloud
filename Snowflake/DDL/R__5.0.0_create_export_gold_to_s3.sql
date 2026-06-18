@@ -5,12 +5,6 @@
 USE DATABASE SILVER;
 USE SCHEMA TRANSFORMATION;
 
-CREATE FILE FORMAT IF NOT EXISTS my_csv_export_format
-  TYPE                          = CSV
-  FIELD_DELIMITER               = ','
-  FIELD_OPTIONALLY_ENCLOSED_BY  = '"'
-  EMPTY_FIELD_AS_NULL           = TRUE;
-
 -- s3_integration (créée en R__1.1.4) n'autorisait que bronze/ : on étend son
 -- périmètre à gold_export/ plutôt que créer une 2e storage integration.
 ALTER STORAGE INTEGRATION s3_integration
@@ -25,6 +19,12 @@ CREATE STAGE IF NOT EXISTS stage_gold_export
   FILE_FORMAT         = my_csv_export_format;
 
 USE ROLE TRANSFORM_ROLE;
+
+CREATE OR REPLACE FILE FORMAT my_csv_export_format
+  TYPE                          = CSV
+  FIELD_DELIMITER               = ','
+  FIELD_OPTIONALLY_ENCLOSED_BY  = '"'
+  EMPTY_FIELD_AS_NULL           = TRUE;
 
 CREATE OR REPLACE PROCEDURE SP_EXPORT_GOLD_TO_S3()
 RETURNS STRING
