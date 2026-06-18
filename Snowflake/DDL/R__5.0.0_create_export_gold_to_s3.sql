@@ -73,7 +73,7 @@ BEGIN
 
   COPY INTO @stage_gold_export/ref_arrondissements.csv
     FROM (
-        SELECT * EXCLUDE (geometry), TO_VARCHAR(geometry) AS geometry
+        SELECT * EXCLUDE (geometry), TO_VARCHAR(ST_ASGEOJSON(geometry)) AS geometry
         FROM SILVER.ZONES_ADMINISTRATIVES.STG_ARRONDISSEMENTS
     )
     FILE_FORMAT = (FORMAT_NAME = my_csv_export_format)
