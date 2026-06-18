@@ -44,29 +44,8 @@ FROM (
 FILE_FORMAT = (FORMAT_NAME = BRONZE.MOBILITE.my_csv_format)
 ON_ERROR    = 'CONTINUE';
 
--- Snowpipe vélib realtime (export quotidien DynamoDB → S3 JSON)
-CREATE PIPE IF NOT EXISTS PIPE_VELIB_REALTIME
-  AUTO_INGEST = TRUE
-AS
-COPY INTO BRONZE.MOBILITE.RAW_VELIB_REALTIME
-(
-    station_id, timestamp_ingestion, num_bikes_available, num_docks_available,
-    mechanical, ebike, nom_arrondissement_communes, _file_name
-)
-FROM (
-    SELECT
-        $1:stationId::VARCHAR,
-        $1:timestamp::VARCHAR,
-        $1:num_bikes_available::VARCHAR,
-        $1:num_docks_available::VARCHAR,
-        $1:mechanical::VARCHAR,
-        $1:ebike::VARCHAR,
-        $1:nom_arrondissement_communes::VARCHAR,
-        METADATA$FILENAME
-    FROM @BRONZE.MOBILITE.stage_bronze_mobilite/velib_realtime/
-)
-FILE_FORMAT = (TYPE = JSON)
-ON_ERROR    = 'CONTINUE';
+-- Vélib realtime reste dans DynamoDB uniquement, pas de pipe Snowflake
+DROP PIPE IF EXISTS PIPE_VELIB_REALTIME;
 
 -- Snowpipe stations Vélib (JSON statique)
 CREATE PIPE IF NOT EXISTS PIPE_STATIONS_VELIB
@@ -89,5 +68,5 @@ FROM (
         METADATA$FILENAME
     FROM @BRONZE.MOBILITE.stage_bronze_mobilite/stations/
 )
-FILE_FORMAT = (TYPE = JSON)
+FILE_FORMAT = (TYPE = JSON, STRIP_OUTER_ARRAY = TRUE)
 ON_ERROR    = 'CONTINUE';

@@ -63,17 +63,4 @@ CREATE TABLE IF NOT EXISTS RAW_STATIONS_VELIB
     _loaded_at                      TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
 );
 
--- Export quotidien DynamoDB → S3 → Snowpipe (vélib temps réel)
-CREATE TABLE IF NOT EXISTS RAW_VELIB_REALTIME
-(
-    station_id                      VARCHAR(50),
-    timestamp_ingestion             VARCHAR(50),
-    num_bikes_available             VARCHAR(20),
-    num_docks_available             VARCHAR(20),
-    mechanical                      VARCHAR(20),
-    ebike                           VARCHAR(20),
-    nom_arrondissement_communes     VARCHAR(255),
-    -- colonnes techniques
-    _file_name                      VARCHAR(500),
-    _loaded_at                      TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
-);
+DROP TABLE IF EXISTS RAW_VELIB_REALTIME;

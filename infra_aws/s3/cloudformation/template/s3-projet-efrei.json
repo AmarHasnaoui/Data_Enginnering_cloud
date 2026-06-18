@@ -120,15 +120,6 @@
                   "Event": "s3:ObjectCreated:*",
                   "Filter": {
                     "S3Key": {
-                      "Rules": [{ "Name": "prefix", "Value": "bronze/velib_realtime/" }]
-                    }
-                  },
-                  "Queue": { "Ref": "SnowpipeVelibRealtimeSQSArn" }
-                },
-                {
-                  "Event": "s3:ObjectCreated:*",
-                  "Filter": {
-                    "S3Key": {
                       "Rules": [{ "Name": "prefix", "Value": "bronze/stations/" }]
                     }
                   },

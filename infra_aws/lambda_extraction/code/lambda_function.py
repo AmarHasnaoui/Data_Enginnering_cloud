@@ -27,21 +27,33 @@ def lambda_handler(event, context):
 
     # ─────────────────────────────────────────────────────────
     # 1. QUALITÉ DE L'AIR (LCSQA / INERIS)
+    # Le fichier J-1 n'est pas toujours publié à temps (délai de validation
+    # LCSQA variable) → on retente sur J-2, J-3 avant d'abandonner.
     # ─────────────────────────────────────────────────────────
-    air_url = (
-        "https://object.infra.data.gouv.fr/api/v1/buckets/ineris-prod/objects/download?prefix="
-        f"lcsqa/concentrations-de-polluants-atmospheriques-reglementes/temps-reel/{YEAR}/FR_E2_{DATE_STR}.csv"
-    )
-    print(f"[air_quality] GET {air_url}")
-    r = requests.get(air_url, timeout=60)
-    if r.status_code == 200:
-        key = f"bronze/air_quality/{YEAR}/{MONTH}/{DAY}/FR_E2_{DATE_STR}.csv"
-        s3.put_object(Bucket=BUCKET, Key=key, Body=r.content, ContentType="text/csv")
-        results["air_quality"] = f"s3://{BUCKET}/{key}"
-        print(f"[air_quality] OK → {key}")
-    else:
-        results["air_quality"] = f"ERROR {r.status_code}"
-        print(f"[air_quality] ERREUR {r.status_code}")
+    air_found = False
+    for lag in range(1, 4):
+        try_date  = (date_obj if lag == 1 else datetime.today() - timedelta(days=lag))
+        try_str   = try_date.strftime("%Y-%m-%d")
+        try_year  = try_date.year
+        air_url = (
+            "https://object.infra.data.gouv.fr/api/v1/buckets/ineris-prod/objects/download?prefix="
+            f"lcsqa/concentrations-de-polluants-atmospheriques-reglementes/temps-reel/{try_year}/FR_E2_{try_str}.csv"
+        )
+        print(f"[air_quality] GET {air_url}")
+        r = requests.get(air_url, timeout=60)
+        if r.status_code == 200:
+            key = f"bronze/air_quality/{try_year}/{try_date.month:02d}/{try_date.day:02d}/FR_E2_{try_str}.csv"
+            s3.put_object(Bucket=BUCKET, Key=key, Body=r.content, ContentType="text/csv")
+            results["air_quality"] = f"s3://{BUCKET}/{key} (J-{lag})"
+            print(f"[air_quality] OK → {key} (J-{lag})")
+            air_found = True
+            break
+        else:
+            print(f"[air_quality] J-{lag} indisponible ({r.status_code})")
+
+    if not air_found:
+        results["air_quality"] = "ERROR aucun fichier disponible sur J-1 à J-3"
+        print("[air_quality] ERREUR aucun fichier disponible sur J-1 à J-3")
 
     # ─────────────────────────────────────────────────────────
     # 2. COMPTAGE VÉLO (opendata.paris.fr)
