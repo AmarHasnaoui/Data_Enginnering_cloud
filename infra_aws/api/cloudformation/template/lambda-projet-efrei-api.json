@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda FastAPI NovaSight serving layer Gold PostgreSQL",
+  "Description": "Lambda FastAPI NovaSight serving layer (Gold PostgreSQL + DynamoDB Vélib temps réel)",
 
   "Parameters": {
     "LambdaS3Bucket": { "Type": "String", "Description": "Bucket S3 contenant le zip Lambda" },
@@ -34,7 +34,8 @@
             "GOLD_PG_USER":     { "Ref": "GoldPgUser" },
             "GOLD_PG_PASSWORD": { "Ref": "GoldPgPassword" },
             "GOLD_PG_DATABASE": { "Ref": "GoldPgDatabase" },
-            "GOLD_PG_PORT":     { "Ref": "GoldPgPort" }
+            "GOLD_PG_PORT":     { "Ref": "GoldPgPort" },
+            "DYNAMO_TABLE":     { "Fn::ImportValue": "projet-efrei-dynamo-velib-table" }
           }
         }
       }
