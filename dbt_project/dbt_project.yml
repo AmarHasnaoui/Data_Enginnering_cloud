@@ -39,3 +39,8 @@ models:
     smartcity:
       +schema: SMARTCITY
       +materialized: incremental
+
+    zones:
+      +schema: ZONES_ADMINISTRATIVES
+      staging:
+        +materialized: table
