@@ -4,11 +4,12 @@
 USE DATABASE BRONZE;
 USE SCHEMA MOBILITE;
 
-CREATE FILE FORMAT IF NOT EXISTS my_csv_format
-  TYPE             = CSV
-  FIELD_OPTIONALLY_ENCLOSED_BY = '"'
-  SKIP_HEADER      = 1
-  EMPTY_FIELD_AS_NULL = TRUE;
+CREATE OR REPLACE FILE FORMAT my_csv_format
+  TYPE                          = CSV
+  FIELD_DELIMITER               = ';'
+  FIELD_OPTIONALLY_ENCLOSED_BY  = '"'
+  SKIP_HEADER                   = 1
+  EMPTY_FIELD_AS_NULL           = TRUE;
 
 CREATE STAGE IF NOT EXISTS stage_bronze_mobilite
   URL                 = 's3://s3-projet-efrei/bronze/'
