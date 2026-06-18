@@ -1,4 +1,18 @@
 -- ══════════════════════════════════════════════════════════════════
+-- GITHUB_ROLE → TRANSFORM_ROLE : permet à run_ddl.py (connecté en
+-- GITHUB_ROLE) de faire USE ROLE TRANSFORM_ROLE pour les objets qui
+-- doivent être possédés par TRANSFORM_ROLE (Tasks dbt/export) plutôt
+-- que par GITHUB_ROLE — sinon ces Tasks s'exécutent sans accès aux
+-- objets (DBT PROJECT, tables SILVER) que seul TRANSFORM_ROLE possède.
+-- ══════════════════════════════════════════════════════════════════
+
+GRANT ROLE TRANSFORM_ROLE TO ROLE GITHUB_ROLE;
+
+-- Privilège de COMPTE (pas schéma/DB) : sans lui, une Task créée et RESUME
+-- reste armée mais ses exécutions planifiées ne partent jamais sous ce rôle.
+GRANT EXECUTE TASK ON ACCOUNT TO ROLE TRANSFORM_ROLE;
+
+-- ══════════════════════════════════════════════════════════════════
 -- INGEST_ROLE : full privilege BRONZE
 -- (schémas créés par GITHUB_ROLE → grants explicites nécessaires)
 -- ══════════════════════════════════════════════════════════════════
@@ -33,8 +47,15 @@ GRANT SELECT ON FUTURE TABLES IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
 GRANT SELECT ON ALL    VIEWS  IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
 GRANT SELECT ON FUTURE VIEWS  IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
 
-GRANT CREATE TABLE, CREATE VIEW, CREATE TASK, CREATE DBT PROJECT ON ALL    SCHEMAS IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
-GRANT CREATE TABLE, CREATE VIEW, CREATE TASK, CREATE DBT PROJECT ON FUTURE SCHEMAS IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
+GRANT CREATE TABLE, CREATE VIEW, CREATE TASK, CREATE PROCEDURE, CREATE DBT PROJECT ON ALL    SCHEMAS IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
+GRANT CREATE TABLE, CREATE VIEW, CREATE TASK, CREATE PROCEDURE, CREATE DBT PROJECT ON FUTURE SCHEMAS IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
+
+-- TASK_RUN_DBT_ALL / TASK_EXPORT_GOLD_TO_S3 sont possédées par TRANSFORM_ROLE
+-- (USE ROLE explicite dans R__1.4.0 et R__5.0.0) mais lisent/écrivent des
+-- stages créés par GITHUB_ROLE (propriétaire du schéma TRANSFORMATION) :
+-- USAGE seul ne suffit pas pour un stage créé par un autre rôle.
+GRANT READ, WRITE ON ALL    STAGES IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
+GRANT READ, WRITE ON FUTURE STAGES IN DATABASE SILVER TO ROLE TRANSFORM_ROLE;
 
 GRANT USAGE  ON ALL    SCHEMAS IN DATABASE BRONZE TO ROLE TRANSFORM_ROLE;
 GRANT USAGE  ON FUTURE SCHEMAS IN DATABASE BRONZE TO ROLE TRANSFORM_ROLE;
