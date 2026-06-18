@@ -42,11 +42,15 @@ CREATE TABLE IF NOT EXISTS RAW_TRAFIC_ROUTIER
     date_debut                      VARCHAR(50),
     date_fin                        VARCHAR(50),
     geo_point_2d                    VARCHAR(100),
-    geo_shape                       VARCHAR(500),
+    geo_shape                       VARCHAR(10000),
     -- colonnes techniques
     _file_name                      VARCHAR(500),
     _loaded_at                      TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
 );
+
+-- Élargit geo_shape si la table existe déjà avec l'ancienne taille VARCHAR(500)
+-- (un GeoJSON de tronçon routier peut contenir de nombreuses coordonnées)
+ALTER TABLE RAW_TRAFIC_ROUTIER ALTER COLUMN geo_shape SET DATA TYPE VARCHAR(16777216);
 
 -- Emplacements statiques des stations Vélib (JSON → colonnes)
 CREATE TABLE IF NOT EXISTS RAW_STATIONS_VELIB
