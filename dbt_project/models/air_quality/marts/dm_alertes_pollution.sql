@@ -39,5 +39,5 @@ JOIN seuils AS s
 WHERE aq.valeur_max > s.seuil
 
 {% if is_incremental() %}
-  AND aq.date_mesure > (SELECT COALESCE(MAX(date_mesure), '1970-01-01') FROM {{ this }})
+  AND aq.updated_at > (SELECT COALESCE(MAX(updated_at), '1970-01-01') FROM {{ this }})
 {% endif %}

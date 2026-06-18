@@ -26,7 +26,7 @@ FROM {{ ref('int_air_quality_idf') }}
 WHERE valeur IS NOT NULL
 
 {% if is_incremental() %}
-  AND date_mesure > (SELECT COALESCE(MAX(date_mesure), '1970-01-01') FROM {{ this }})
+  AND updated_at > (SELECT COALESCE(MAX(updated_at), '1970-01-01') FROM {{ this }})
 {% endif %}
 
 GROUP BY code_site, nom_site, type_implantation, polluant, unite_mesure,
