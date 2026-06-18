@@ -30,6 +30,7 @@ while True:
                 break
 
             for station in records:
+                coord = station.get("coordonnees_geo") or {}
                 producer.send(TOPIC, {
                     "stationId":                    station.get("stationcode"),
                     "timestamp":                    timestamp,
@@ -38,6 +39,8 @@ while True:
                     "mechanical":                   station.get("mechanical"),
                     "ebike":                        station.get("ebike"),
                     "nom_arrondissement_communes":  station.get("nom_arrondissement_communes"),
+                    "latitude":                     coord.get("lat"),
+                    "longitude":                    coord.get("lon"),
                 })
                 total_sent += 1
 

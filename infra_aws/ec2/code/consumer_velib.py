@@ -46,6 +46,8 @@ for msg in consumer:
             "mechanical":                  data.get("mechanical"),
             "ebike":                       data.get("ebike"),
             "nom_arrondissement_communes": data.get("nom_arrondissement_communes"),
+            "latitude":                    to_decimal(data.get("latitude")),
+            "longitude":                   to_decimal(data.get("longitude")),
         })
         print("DynamoDB update:", station_id)
     except Exception as e:

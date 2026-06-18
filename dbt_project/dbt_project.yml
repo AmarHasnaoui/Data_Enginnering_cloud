@@ -39,3 +39,12 @@ models:
     smartcity:
       +schema: SMARTCITY
       +materialized: incremental
+
+    zones:
+      +schema: ZONES_ADMINISTRATIVES
+      staging:
+        +materialized: table
+      intermediate:
+        +materialized: table
+      marts:
+        +materialized: incremental

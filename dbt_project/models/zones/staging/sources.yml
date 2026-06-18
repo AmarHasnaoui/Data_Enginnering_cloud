@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: bronze_zones
+    database: BRONZE
+    schema: ZONES_ADMINISTRATIVES
+    description: "Référentiel des zones administratives — chargement one-shot (pas de Snowpipe, upload manuel)"
+    tables:
+      - name: RAW_ARRONDISSEMENTS_PARIS
+        description: "GeoJSON FeatureCollection complet des 20 arrondissements parisiens — source opendata.paris.fr"
+        columns:
+          - name: raw_geojson
+            description: "GeoJSON brut (FeatureCollection) chargé en une seule ligne VARIANT"
+            tests: [not_null]
+          - name: _loaded_at
+            tests: [not_null]
