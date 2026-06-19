@@ -215,7 +215,7 @@ with tab_zones:
     else:
         zone_kpi["date_jour"] = pd.to_datetime(zone_kpi["date_jour"])
         latest_date = zone_kpi["date_jour"].max()
-        latest_kpi  = zone_kpi[zone_kpi["date_jour"] == latest_date]
+        latest_kpi  = zone_kpi[zone_kpi["date_jour"] == latest_date].drop(columns=["nom_arrondissement"])
 
         metric_options = {
             "Indice de pollution moyen":      "pollution_indice_moyen",
