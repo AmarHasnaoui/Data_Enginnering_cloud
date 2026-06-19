@@ -9,11 +9,10 @@ USE ROLE TRANSFORM_ROLE;
 
 CREATE OR REPLACE FILE FORMAT my_csv_export_format
   TYPE                          = CSV
-  FIELD_DELIMITER               = ','
-  FIELD_OPTIONALLY_ENCLOSED_BY  = '"'
+  FIELD_DELIMITER               = '\t'
   EMPTY_FIELD_AS_NULL           = TRUE
   COMPRESSION                   = NONE
-  NULL_IF                       = ('\N');
+  NULL_IF                       = ('');
 
 USE ROLE GITHUB_ROLE;
 -- s3_integration (créée en R__1.1.4) n'autorisait que bronze/ : on étend son
@@ -33,11 +32,10 @@ USE ROLE TRANSFORM_ROLE;
 
 CREATE OR REPLACE FILE FORMAT my_csv_export_format
   TYPE                          = CSV
-  FIELD_DELIMITER               = ','
-  FIELD_OPTIONALLY_ENCLOSED_BY  = '"'
+  FIELD_DELIMITER               = '\t'
   EMPTY_FIELD_AS_NULL           = TRUE
   COMPRESSION                   = NONE
-  NULL_IF                       = ('\N');
+  NULL_IF                       = ('');
 
 CREATE OR REPLACE PROCEDURE SP_EXPORT_GOLD_TO_S3()
 RETURNS STRING

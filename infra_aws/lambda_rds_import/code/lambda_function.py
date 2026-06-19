@@ -44,7 +44,7 @@ def import_table(pg_conn, pg_table, bucket, key, region):
         print(f"Import depuis s3://{bucket}/{key}...")
         cur.execute(
             "SELECT aws_s3.table_import_from_s3("
-            "%s, '', '(format csv, header true, null ''\\N'')', "
+            "%s, '', '(format csv, header true, delimiter E''\\t'')', "
             "aws_commons.create_s3_uri(%s, %s, %s));",
             (pg_table, bucket, key, region),
         )
