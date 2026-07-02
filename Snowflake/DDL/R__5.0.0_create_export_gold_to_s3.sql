@@ -94,14 +94,16 @@ def run(session):
     results.append(f'dm_air_quality_daily:{n}')
 
     # ── dm_alertes_pollution ─────────────────────────────────────────────────
+    # Seuils a 50% des valeurs OMS officielles pour capturer les cas intermediaires
+    # visibles via le slider Streamlit (NO2 OMS=40->20, PM10 OMS=50->25, etc.)
     wm = _get_wm(session, 'dm_alertes_pollution')
     df_seuils = session.create_dataframe(
-        [('NO2',10.,'µg/m3','OMS annuel'),('NO2',10.,'µg/m3','OMS horaire'),
-         ('PM10',10.,'µg/m3','OMS journalier'),('PM2.5',5.,'µg/m3','OMS journalier'),
-         ('O3',10.,'µg/m3','OMS 8h glissant'),('SO2',10.,'µg/m3','OMS 24h')],
-        schema=StructType([StructField('polluant',StringType()),
+        [('NO2',20.,'µg/m3','OMS annuel'),('NO2',100.,'µg/m3','OMS horaire'),
+         ('PM10',25.,'µg/m3','OMS journalier'),('PM2.5',12.,'µg/m3','OMS journalier'),
+         ('O3',50.,'µg/m3','OMS 8h glissant'),('SO2',10.,'µg/m3','OMS 24h')],
+        schema=StructType([StructField('s_polluant',StringType()),
                            StructField('seuil',FloatType()),
-                           StructField('unite',StringType()),
+                           StructField('s_unite',StringType()),
                            StructField('type_seuil',StringType())])
     )
     df_aq = (
@@ -113,19 +115,24 @@ def run(session):
         .agg(F.max('valeur').alias('valeur_max'),
              F.avg('valeur').alias('valeur_moyenne'))
     )
-    aq = df_aq.alias('aq'); sl = df_seuils.alias('sl')
     df = (
-        aq.join(sl, (aq['polluant']==sl['polluant']) & (aq['unite_mesure']==sl['unite']))
-        .filter(F.col('aq.valeur_max') > F.col('sl.seuil'))
-        .select(F.col('aq.code_site'), F.col('aq.nom_site'), F.col('aq.polluant'),
-                F.col('aq.date_mesure'),
-                F.col('aq.valeur_max').alias('valeur_max_journaliere'),
-                F.col('aq.valeur_moyenne'), F.col('aq.unite_mesure'),
-                F.col('sl.seuil').alias('seuil_reglementaire'),
-                F.col('sl.type_seuil'),
-                F.round(F.col('aq.valeur_max')/F.col('sl.seuil'),2).alias('ratio_depassement'),
-                F.col('aq.latitude'), F.col('aq.longitude'),
-                F.current_timestamp().cast('timestamp_ntz').alias('updated_at'))
+        df_aq.join(
+            df_seuils,
+            (F.col('polluant') == F.col('s_polluant')) &
+            (F.col('unite_mesure') == F.col('s_unite'))
+        )
+        .filter(F.col('valeur_max') > F.col('seuil'))
+        .select(
+            F.col('code_site'), F.col('nom_site'), F.col('polluant'),
+            F.col('date_mesure'),
+            F.col('valeur_max').alias('valeur_max_journaliere'),
+            F.col('valeur_moyenne'), F.col('unite_mesure'),
+            F.col('seuil').alias('seuil_reglementaire'),
+            F.col('type_seuil'),
+            F.round(F.col('valeur_max') / F.col('seuil'), 2).alias('ratio_depassement'),
+            F.col('latitude'), F.col('longitude'),
+            F.current_timestamp().cast('timestamp_ntz').alias('updated_at'),
+        )
     )
     n = df.count()
     if n > 0:
