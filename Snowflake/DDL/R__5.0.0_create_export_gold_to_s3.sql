@@ -22,8 +22,7 @@ ALTER STORAGE INTEGRATION s3_integration
 
 CREATE STAGE IF NOT EXISTS stage_gold_export
   URL                 = 's3://s3-projet-efrei/gold_export/'
-  STORAGE_INTEGRATION = s3_integration
-  FILE_FORMAT         = my_csv_export_format;
+  STORAGE_INTEGRATION = s3_integration;
 
 USE ROLE TRANSFORM_ROLE;
 

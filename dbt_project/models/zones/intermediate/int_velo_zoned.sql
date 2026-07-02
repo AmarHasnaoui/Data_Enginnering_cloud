@@ -9,6 +9,6 @@ SELECT
     v.date_jour,
     v.compteur_id,
     v.total_passages_jour
-FROM {{ ref('dm_velo_daily') }} AS v
+FROM {{ ref('int_velo_daily') }} AS v
 JOIN {{ ref('stg_arrondissements') }} AS z
   ON ST_CONTAINS(z.geometry, ST_MAKEPOINT(v.longitude, v.latitude))

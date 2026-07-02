@@ -11,6 +11,6 @@ SELECT
     t.debit_moyen,
     t.taux_occupation_moyen,
     t.nb_heures_bloque
-FROM {{ ref('dm_trafic_routier_daily') }} AS t
+FROM {{ ref('int_trafic_daily') }} AS t
 JOIN {{ ref('stg_arrondissements') }} AS z
   ON ST_CONTAINS(z.geometry, ST_MAKEPOINT(t.longitude, t.latitude))
