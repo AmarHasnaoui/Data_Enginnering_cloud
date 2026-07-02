@@ -35,7 +35,9 @@ def read_parquet_from_s3(bucket: str, key: str) -> list[dict]:
     s3 = boto3.client("s3")
     obj = s3.get_object(Bucket=bucket, Key=key)
     buf = io.BytesIO(obj["Body"].read())
-    return pq.read_table(buf).to_pylist()
+    rows = pq.read_table(buf).to_pylist()
+    # Snowflake exporte les noms de colonnes en MAJUSCULES ; PostgreSQL attend du lowercase
+    return [{k.lower(): v for k, v in row.items()} for row in rows]
 
 
 def upsert(conn, table: str, rows: list[dict], conflict_cols: list[str]) -> None:
