@@ -354,7 +354,7 @@ Cette approche permet de valider le pipeline de bout en bout avant d'investir da
 | R-03 | **Données sources mal structurées ou vides** (champs manquants, formats changeants) | Moyenne | Moyen | Tests de qualité dbt sur chaque modèle Silver, alertes en cas d'échec |
 | R-04 | **Régression lors d'une mise à jour dbt** (modèle Silver cassé) | Moyenne | Élevé | pipeline bloque le déploiement si erreurs dans le dbt |
 | R-05 | **Expiration du Snowflake Trial** avant fin de projet(dans le cadre du projet à efrei) | Moyenne | Élevé | prévoir migration vers un compte payant minimal |
-| R-06 | **Accès concurrent au dashboard** | Faible | Faible | Cache `st.cache_data` (5 min) pour limiter les appels API ; pagination côté serveur |
+| R-06 | **Accès concurrent au dashboard** | Faible | Faible | Cache `st.cache_data` (5 min) pour limiter les appels API, pagination côté serveur |
 
 ---
 
