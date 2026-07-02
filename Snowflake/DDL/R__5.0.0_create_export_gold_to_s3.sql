@@ -59,15 +59,14 @@ def _set_wm(session, dataset, last_date):
         WHEN NOT MATCHED THEN INSERT (dataset,last_date) VALUES(s.d,s.ld)
     """).collect()
 
-def _export(session, df, dataset, run_date):
-    view = f'TEMP_V_{dataset.upper()}'
-    df.create_or_replace_temp_view(view)
-    session.sql(
-        f"COPY INTO {STAGE}/{dataset}/{run_date}.parquet "
-        f"FROM {view} "
-        f"FILE_FORMAT = (TYPE = 'PARQUET') "
-        f"OVERWRITE = TRUE SINGLE = TRUE"
-    ).collect()
+def _export(df, dataset, run_date):
+    df.write.copy_into_location(
+        f"{STAGE}/{dataset}/{run_date}.parquet",
+        file_format_type="parquet",
+        header=True,
+        overwrite=True,
+        single=True,
+    )
 
 def run(session):
     run_date = date.today().strftime("%Y%m%d")
@@ -90,7 +89,7 @@ def run(session):
     )
     n = df.count()
     if n > 0:
-        _export(session, df,'dm_air_quality_daily', run_date)
+        _export(df,'dm_air_quality_daily', run_date)
         _set_wm(session, 'dm_air_quality_daily',
                 df.agg(F.max('date_mesure')).collect()[0][0])
     results.append(f'dm_air_quality_daily:{n}')
@@ -138,7 +137,7 @@ def run(session):
     )
     n = df.count()
     if n > 0:
-        _export(session, df,'dm_alertes_pollution', run_date)
+        _export(df,'dm_alertes_pollution', run_date)
         _set_wm(session, 'dm_alertes_pollution',
                 df.agg(F.max('date_mesure')).collect()[0][0])
     results.append(f'dm_alertes_pollution:{n}')
@@ -155,7 +154,7 @@ def run(session):
     )
     n = df.count()
     if n > 0:
-        _export(session, df,'dm_velo_daily', run_date)
+        _export(df,'dm_velo_daily', run_date)
         _set_wm(session, 'dm_velo_daily',
                 df.agg(F.max('date_jour')).collect()[0][0])
     results.append(f'dm_velo_daily:{n}')
@@ -173,7 +172,7 @@ def run(session):
     )
     n = df.count()
     if n > 0:
-        _export(session, df,'dm_trafic_routier_daily', run_date)
+        _export(df,'dm_trafic_routier_daily', run_date)
         _set_wm(session, 'dm_trafic_routier_daily',
                 df.agg(F.max('date_jour')).collect()[0][0])
     results.append(f'dm_trafic_routier_daily:{n}')
@@ -222,7 +221,7 @@ def run(session):
           .with_column('updated_at', F.current_timestamp().cast('timestamp_ntz')))
     n = df.count()
     if n > 0:
-        _export(session, df,'dm_smartcity_kpi_daily', run_date)
+        _export(df,'dm_smartcity_kpi_daily', run_date)
         _set_wm(session, 'dm_smartcity_kpi_daily',
                 df.agg(F.max('date_jour')).collect()[0][0])
     results.append(f'dm_smartcity_kpi_daily:{n}')
@@ -281,7 +280,7 @@ def run(session):
     )
     n = df.count()
     if n > 0:
-        _export(session, df,'dm_zone_kpi_daily', run_date)
+        _export(df,'dm_zone_kpi_daily', run_date)
         _set_wm(session, 'dm_zone_kpi_daily',
                 df.agg(F.max('date_jour')).collect()[0][0])
     results.append(f'dm_zone_kpi_daily:{n}')
@@ -295,7 +294,7 @@ def run(session):
     """)
     n = df.count()
     if n > 0:
-        _export(session, df,'ref_arrondissements', run_date)
+        _export(df,'ref_arrondissements', run_date)
     results.append(f'ref_arrondissements:{n}')
 
     return ' | '.join(results)
