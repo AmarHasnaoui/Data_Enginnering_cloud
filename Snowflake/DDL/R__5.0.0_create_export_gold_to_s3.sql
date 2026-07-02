@@ -61,7 +61,7 @@ def _set_wm(session, dataset, last_date):
 
 def _export(df, dataset, run_date):
     df.write.copy_into_location(
-        f"{STAGE}/{dataset}/{run_date}",
+        f"{STAGE}/{dataset}/{run_date}.parquet",
         file_format_type="parquet",
         overwrite=True,
         single=True,
