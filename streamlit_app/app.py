@@ -224,14 +224,13 @@ with tab_mobilite:
 
     with col2:
         st.subheader("Trafic routier")
-        trafic = pd.DataFrame(api.get_trafic(date_start_str, date_end_str, limit=1000))
+        trafic = pd.DataFrame(api.get_trafic_daily_avg(date_start_str, date_end_str))
         if trafic.empty:
             st.info("Aucune donnee trafic sur cette periode.")
         else:
             trafic["date_jour"] = pd.to_datetime(trafic["date_jour"])
-            evo = trafic.groupby("date_jour")["debit_moyen"].mean()
             st.caption("Debit moyen par jour")
-            st.line_chart(evo)
+            st.line_chart(trafic.set_index("date_jour")["debit_moyen"])
 
     st.divider()
     st.subheader("Velib temps reel")

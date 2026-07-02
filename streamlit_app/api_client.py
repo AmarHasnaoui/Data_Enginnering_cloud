@@ -70,6 +70,14 @@ def get_trafic(date_start=None, date_end=None, arc_id=None, limit=1000):
 
 
 @st.cache_data(ttl=300, show_spinner=False)
+def get_trafic_daily_avg(date_start=None, date_end=None, limit=365):
+    params = {"limit": limit}
+    if date_start: params["date_start"] = date_start
+    if date_end:   params["date_end"]   = date_end
+    return _get("/mobilite/trafic/daily-avg", params)
+
+
+@st.cache_data(ttl=300, show_spinner=False)
 def get_zone_kpi(date_start=None, date_end=None, arrondissement_code=None, limit=1000):
     params = {"limit": limit}
     if date_start: params["date_start"] = date_start

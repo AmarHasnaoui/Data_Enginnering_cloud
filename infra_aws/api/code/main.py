@@ -141,6 +141,22 @@ def get_trafic(
     return query(f"SELECT * FROM dm_trafic_routier_daily {where} ORDER BY date_jour DESC LIMIT %s", tuple(params))
 
 
+@app.get("/mobilite/trafic/daily-avg", tags=["Mobilité"])
+def get_trafic_daily_avg(
+    date_start: Optional[date] = Query(None),
+    date_end:   Optional[date] = Query(None),
+    limit:      int            = Query(365, ge=1, le=1000),
+):
+    where, params = date_clause("date_jour", date_start, date_end)
+    params.append(limit)
+    return query(
+        f"SELECT date_jour, AVG(debit_moyen) AS debit_moyen "
+        f"FROM dm_trafic_routier_daily {where} "
+        f"GROUP BY date_jour ORDER BY date_jour ASC LIMIT %s",
+        tuple(params),
+    )
+
+
 # ─────────────────────────────────────────────────────────
 # Zones administratives (arrondissements Paris)
 # ─────────────────────────────────────────────────────────
