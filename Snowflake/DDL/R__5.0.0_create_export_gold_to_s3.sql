@@ -84,7 +84,7 @@ def run(session):
              F.min('valeur').alias('valeur_min'),
              F.count(F.lit(1)).alias('nb_mesures'),
              F.avg('taux_saisie').alias('taux_saisie_moyen'))
-        .with_column('updated_at', F.current_timestamp())
+        .with_column('updated_at', F.current_timestamp().cast('timestamp_ntz'))
     )
     n = df.count()
     if n > 0:
@@ -96,9 +96,9 @@ def run(session):
     # ── dm_alertes_pollution ─────────────────────────────────────────────────
     wm = _get_wm(session, 'dm_alertes_pollution')
     df_seuils = session.create_dataframe(
-        [('NO2',40.,'µg/m3','OMS annuel'),('NO2',200.,'µg/m3','OMS horaire'),
-         ('PM10',50.,'µg/m3','OMS journalier'),('PM2.5',25.,'µg/m3','OMS journalier'),
-         ('O3',100.,'µg/m3','OMS 8h glissant'),('SO2',20.,'µg/m3','OMS 24h')],
+        [('NO2',10.,'µg/m3','OMS annuel'),('NO2',10.,'µg/m3','OMS horaire'),
+         ('PM10',10.,'µg/m3','OMS journalier'),('PM2.5',5.,'µg/m3','OMS journalier'),
+         ('O3',10.,'µg/m3','OMS 8h glissant'),('SO2',10.,'µg/m3','OMS 24h')],
         schema=StructType([StructField('polluant',StringType()),
                            StructField('seuil',FloatType()),
                            StructField('unite',StringType()),
@@ -125,7 +125,7 @@ def run(session):
                 F.col('sl.type_seuil'),
                 F.round(F.col('aq.valeur_max')/F.col('sl.seuil'),2).alias('ratio_depassement'),
                 F.col('aq.latitude'), F.col('aq.longitude'),
-                F.current_timestamp().alias('updated_at'))
+                F.current_timestamp().cast('timestamp_ntz').alias('updated_at'))
     )
     n = df.count()
     if n > 0:
@@ -142,7 +142,7 @@ def run(session):
         .select('compteur_id','compteur_nom','nom_site','date_jour',
                 'total_passages_jour','nb_mesures_horaires','pic_horaire',
                 'latitude','longitude')
-        .with_column('updated_at', F.current_timestamp())
+        .with_column('updated_at', F.current_timestamp().cast('timestamp_ntz'))
     )
     n = df.count()
     if n > 0:
@@ -160,7 +160,7 @@ def run(session):
                 'taux_occupation_moyen','nb_heures_bloque','nb_heures_sature',
                 'nb_heures_dense','nb_heures_fluide','nb_mesures',
                 'latitude','longitude')
-        .with_column('updated_at', F.current_timestamp())
+        .with_column('updated_at', F.current_timestamp().cast('timestamp_ntz'))
     )
     n = df.count()
     if n > 0:
@@ -210,7 +210,7 @@ def run(session):
           .join(df_alertes,'date_jour','left')
           .join(df_trafic, 'date_jour','left')
           .join(df_velo,   'date_jour','left')
-          .with_column('updated_at', F.current_timestamp()))
+          .with_column('updated_at', F.current_timestamp().cast('timestamp_ntz')))
     n = df.count()
     if n > 0:
         _export(df, 'dm_smartcity_kpi_daily', run_date)
@@ -268,7 +268,7 @@ def run(session):
                    + F.coalesce(F.col('debit_routier_moyen'),F.lit(0)))
             ).otherwise(F.lit(None))
         )
-        .with_column('updated_at', F.current_timestamp())
+        .with_column('updated_at', F.current_timestamp().cast('timestamp_ntz'))
     )
     n = df.count()
     if n > 0:

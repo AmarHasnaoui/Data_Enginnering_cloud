@@ -132,16 +132,77 @@ with tab_air:
 
     st.divider()
     st.subheader("Alertes de depassement")
-    alertes = pd.DataFrame(api.get_alertes(date_start_str, date_end_str, limit=200))
+
+    # Seuils OMS officiels (valeur par defaut du slider) et seuils de capture
+    # Snowpark pre-calcule dm_alertes_pollution a partir de 50% des seuils OMS,
+    # ce qui permet au slider de descendre en dessous des valeurs officielles.
+    SEUILS_OMS     = {"NO2": 40,  "PM10": 50,  "PM2.5": 25, "O3": 100, "SO2": 20}
+    SEUILS_CAPTURE = {"NO2": 10,  "PM10": 10,  "PM2.5": 5, "O3": 10,  "SO2": 5}
+
+    alertes = pd.DataFrame(api.get_alertes(date_start_str, date_end_str, limit=2000))
+
+    col_sel, col_seuil = st.columns([1, 2])
+    with col_sel:
+        pol_alerte = st.selectbox(
+            "Polluant", list(SEUILS_OMS.keys()), key="pol_alerte"
+        )
+    with col_seuil:
+        seuil_oms     = SEUILS_OMS[pol_alerte]
+        seuil_capture = SEUILS_CAPTURE[pol_alerte]
+        seuil_custom  = st.slider(
+            f"Seuil personnalise (µg/m3)  —  OMS : {seuil_oms} µg/m3",
+            min_value=seuil_capture, max_value=500, value=seuil_oms, step=5,
+        )
+
     if alertes.empty:
-        st.info("Aucune alerte sur cette periode.")
+        st.info("Aucune donnee d'alerte sur cette periode.")
     else:
         alertes["date_mesure"] = pd.to_datetime(alertes["date_mesure"])
-        st.dataframe(
-            alertes.sort_values("ratio_depassement", ascending=False),
-            use_container_width=True,
-            hide_index=True,
-        )
+        dep = alertes[
+            (alertes["polluant"] == pol_alerte) &
+            (alertes["valeur_max_journaliere"] > seuil_custom)
+        ].copy()
+        dep["ratio"] = (dep["valeur_max_journaliere"] / seuil_custom).round(2)
+
+        if dep.empty:
+            st.success(
+                f"Aucune station ne depasse {seuil_custom} µg/m3 de {pol_alerte} sur la periode."
+            )
+        else:
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Depassements (lignes)", len(dep))
+            c2.metric("Stations concernees", dep["code_site"].nunique())
+            c3.metric("Ratio max", f"{dep['ratio'].max():.2f}x le seuil")
+
+            map_df = dep.dropna(subset=["latitude", "longitude"])
+            if not map_df.empty:
+                layer = pdk.Layer(
+                    "ScatterplotLayer",
+                    map_df,
+                    get_position=["longitude", "latitude"],
+                    get_radius=400,
+                    get_fill_color=[220, 50, 50, 200],
+                    pickable=True,
+                )
+                st.pydeck_chart(pdk.Deck(
+                    layers=[layer],
+                    initial_view_state=pdk.ViewState(
+                        latitude=PARIS_LAT, longitude=PARIS_LON, zoom=10
+                    ),
+                    tooltip={
+                        "html": "<b>{nom_site}</b><br/>"
+                                + pol_alerte
+                                + " max : {valeur_max_journaliere} µg/m3<br/>Ratio : {ratio}x"
+                    },
+                ))
+
+            st.dataframe(
+                dep[["date_mesure", "nom_site", "valeur_max_journaliere",
+                     "valeur_moyenne", "ratio"]]
+                .sort_values("ratio", ascending=False),
+                use_container_width=True,
+                hide_index=True,
+            )
 
 
 # ─────────────────────────────────────────────────────────
