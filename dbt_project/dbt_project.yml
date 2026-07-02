@@ -11,8 +11,8 @@ seed-paths:   ["seeds"]
 target-path:  "target"
 clean-targets: ["target", "dbt_packages"]
 
-# Projet déployé dans SILVER.TRANSFORMATION via Snow CLI (snow dbt run)
-# Les modèles sont écrits dans leurs schémas respectifs (generate_schema_name override)
+# dbt gère uniquement Bronze → Silver (staging + intermediate).
+# Les datamarts Gold sont produits par la Stored Procedure Snowpark SP_EXPORT_GOLD_TO_S3.
 
 models:
   novasight:
@@ -24,8 +24,6 @@ models:
         +materialized: view
       intermediate:
         +materialized: table
-      marts:
-        +materialized: incremental
 
     mobilite:
       +schema: MOBILITE
@@ -33,12 +31,6 @@ models:
         +materialized: view
       intermediate:
         +materialized: table
-      marts:
-        +materialized: incremental
-
-    smartcity:
-      +schema: SMARTCITY
-      +materialized: incremental
 
     zones:
       +schema: ZONES_ADMINISTRATIVES
@@ -46,5 +38,3 @@ models:
         +materialized: table
       intermediate:
         +materialized: table
-      marts:
-        +materialized: incremental

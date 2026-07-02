@@ -1,9 +1,9 @@
 name: Deploy infra AWS
 
 on:
-  # push:
-  #   branches:
-  #     - dev_amar
+  push:
+    branches:
+      - dev_amar
   workflow_dispatch:
 
 jobs:
@@ -121,11 +121,11 @@ jobs:
               SubnetIds=$SUBNET_IDS \
             --no-fail-on-empty-changeset
 
-      # --- Lambda trigger RDS import (S3 gold_export/*.csv > EventBridge > aws_s3) ---
+      # --- Lambda trigger RDS import (S3 gold_export/**/*.parquet > EventBridge > PyArrow UPSERT RDS) ---
       - name: Zip Lambda RDS import
         run: |
           cd infra_aws/lambda_rds_import/code
-          pip install psycopg2-binary -t .
+          pip install -r requirements.txt -t .
           zip -r ../../../rds_import.zip .
 
       - name: Upload RDS import zip to S3

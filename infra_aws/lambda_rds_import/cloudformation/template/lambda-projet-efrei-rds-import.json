@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda-trigger : S3 (gold_export/*.csv)  EventBridge  import natif RDS Postgres (aws_s3)",
+  "Description": "Lambda-trigger : S3 (gold_export/**/*.parquet) EventBridge -> PyArrow UPSERT RDS Postgres",
   "Parameters": {
     "RDSPassword": {
       "Type": "String",
@@ -40,6 +40,12 @@
                   "Resource": {
                     "Fn::Sub": "arn:aws:logs:eu-west-3:${AWS::AccountId}:log-group:/aws/lambda/lambda-projet-efrei-rds-import:*"
                   }
+                },
+                {
+                  "Sid": "S3ReadGoldExport",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject"],
+                  "Resource": "arn:aws:s3:::s3-projet-efrei/gold_export/*"
                 }
               ]
             }
@@ -58,8 +64,8 @@
           "S3Bucket": "s3-projet-efrei",
           "S3Key": "lambda/rds_import.zip"
         },
-        "Timeout": 60,
-        "MemorySize": 256,
+        "Timeout": 120,
+        "MemorySize": 512,
         "Environment": {
           "Variables": {
             "RDS_HOST":     { "Fn::ImportValue": "projet-efrei-rds-endpoint" },
