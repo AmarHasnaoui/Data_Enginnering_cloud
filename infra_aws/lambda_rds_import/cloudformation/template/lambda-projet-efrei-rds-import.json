@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Lambda-trigger : S3 (gold_export/**/*.parquet) EventBridge -> PyArrow UPSERT RDS Postgres",
+  "Description": "Lambda-trigger : S3 EventBridge -> PyArrow UPSERT RDS Postgres",
   "Parameters": {
     "RDSPassword": {
       "Type": "String",

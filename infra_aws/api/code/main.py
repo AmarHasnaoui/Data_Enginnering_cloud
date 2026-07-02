@@ -92,14 +92,15 @@ def get_alertes(
     date_end:   Optional[date] = Query(None),
     polluant:   Optional[str]  = Query(None),
     limit:      int            = Query(100, ge=1, le=1000),
+    offset:     int            = Query(0, ge=0),
 ):
     where, params = date_clause("date_mesure", date_start, date_end)
     if polluant:
         connector = "AND" if where else "WHERE"
         where += f" {connector} polluant = %s"
         params.append(polluant)
-    params.append(limit)
-    return query(f"SELECT * FROM dm_alertes_pollution {where} ORDER BY date_mesure DESC, ratio_depassement DESC LIMIT %s", tuple(params))
+    params.extend([limit, offset])
+    return query(f"SELECT * FROM dm_alertes_pollution {where} ORDER BY date_mesure DESC, ratio_depassement DESC LIMIT %s OFFSET %s", tuple(params))
 
 
 # ─────────────────────────────────────────────────────────

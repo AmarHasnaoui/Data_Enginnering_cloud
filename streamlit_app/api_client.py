@@ -35,12 +35,20 @@ def get_air_quality(date_start=None, date_end=None, polluant=None, code_site=Non
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def get_alertes(date_start=None, date_end=None, polluant=None, limit=200):
-    params = {"limit": limit}
-    if date_start: params["date_start"] = date_start
-    if date_end:   params["date_end"]   = date_end
-    if polluant:   params["polluant"]   = polluant
-    return _get("/air-quality/alertes", params)
+def get_alertes(date_start=None, date_end=None, polluant=None, limit=2000):
+    page_size = 1000
+    all_rows, offset = [], 0
+    while len(all_rows) < limit:
+        params = {"limit": page_size, "offset": offset}
+        if date_start: params["date_start"] = date_start
+        if date_end:   params["date_end"]   = date_end
+        if polluant:   params["polluant"]   = polluant
+        batch = _get("/air-quality/alertes", params)
+        all_rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        offset += page_size
+    return all_rows[:limit]
 
 
 @st.cache_data(ttl=300, show_spinner=False)
