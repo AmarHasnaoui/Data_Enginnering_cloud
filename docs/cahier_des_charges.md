@@ -9,7 +9,7 @@
 | Référence | CDC-2026-001 |
 | Version | 1.0 |
 | Date | Juin 2026 |
-| Auteurs | Amar HASNAOUI, Amine NAIT-SIDHOUM |
+| Auteurs | Amar HASNAOUI, Amine NAIT SIDHOUM |
 | Encadrante | Steve Elonga |
 | Établissement | EFREI Paris  Master 2 Data Engineering & Intelligence Artificielle |
 
@@ -59,7 +59,7 @@ Dans le cadre du Master 2 Data Engineering & Intelligence Artificielle de l'EFRE
 | Acteur | Rôle |
 |---|---|
 | Amar HASNAOUI | Data Engineer/Architecture cloud |
-| Amine NAIT-SIDHOUM | Data Scientist/Analyst  |
+| Amine NAIT SIDHOUM | Data Scientist/Analyst  |
 | Steve Elonga | Encadrant pédagogique EFREI |
 | Utilisateurs finaux | Tout profil souhaitant consulter les données Smart City Paris via le dashboard |
 
