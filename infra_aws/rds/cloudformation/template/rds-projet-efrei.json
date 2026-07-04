@@ -86,7 +86,7 @@
       "Type": "AWS::RDS::DBInstance",
       "DeletionPolicy": "Snapshot",
       "Properties": {
-        "DBInstanceIdentifier": "rds-projet-efrei",
+        "DBInstanceIdentifier": "rds-projet-efrei-v2",
         "DBInstanceClass": "db.t3.micro",
         "Engine": "postgres",
         "DBName": "novasight",
