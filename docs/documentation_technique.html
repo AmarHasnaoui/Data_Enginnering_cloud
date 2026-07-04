@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>documentation_technique.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="documentation-technique--novasight">Documentation Technique  NovaSight</h1>
+<h2 id="plateforme-smart-city-paris-idf--architecture-médaillon-cloud">Plateforme Smart City Paris IDF · Architecture Médaillon Cloud</h2>
+<hr>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Valeur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Version</td>
+<td>1.1</td>
+</tr>
+<tr>
+<td>Date</td>
+<td>Juillet 2026</td>
+</tr>
+<tr>
+<td>Auteurs</td>
+<td>Amar HASNAOUI · Amine NAIT SIDHOUM</td>
+</tr>
+<tr>
+<td>Stack principale</td>
+<td>AWS · Snowflake · dbt · FastAPI · Streamlit · Kafka</td>
+</tr>
+<tr>
+<td>Repository</td>
+<td>github.com/AmarHasnaoui/Data_Enginnering_cloud</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="table-des-matières">Table des matières</h2>
+<ol>
+<li><a href="#1-vue-densemble">Vue d'ensemble</a></li>
+<li><a href="#2-pr%C3%A9requis--configuration-initiale">Prérequis &amp; configuration initiale</a></li>
+<li><a href="#3-architecture-d%C3%A9taill%C3%A9e-par-couche">Architecture détaillée par couche</a></li>
+<li><a href="#4-guide-de-d%C3%A9ploiement">Guide de déploiement</a></li>
+<li><a href="#5-orchestration">Orchestration</a></li>
+<li><a href="#6-monitoring--alerting">Monitoring &amp; Alerting</a></li>
+<li><a href="#7-cicd--github-actions">CI/CD  GitHub Actions</a></li>
+<li><a href="#8-analyse-finops">Analyse FinOps</a></li>
+<li><a href="#9-s%C3%A9curit%C3%A9--chiffrement-kms--rgpd">Sécurité  Chiffrement KMS &amp; RGPD</a></li>
+</ol>
+<hr>
+<h2 id="1-vue-densemble">1. Vue d'ensemble</h2>
+<h3 id="11-contexte">1.1 Contexte</h3>
+<p>NovaSight est une plateforme data end-to-end de type <strong>Smart City</strong> centralisant des données environnementales et de mobilité parisiennes. Elle implémente une <strong>architecture Médaillon</strong> (Bronze -&gt; Silver -&gt; Gold) sur AWS et Snowflake, avec exposition via une API REST sécurisée et un dashboard interactif.</p>
+<h3 id="12-schéma-darchitecture-technique-global">1.2 Schéma d'architecture technique global</h3>
+<p><img src="../images/schema archi tech.png" alt="Schéma architecture technique NovaSight"></p>
+<blockquote>
+<p>Architecture complète : données publiques (data.gouv.fr, AIRPARIF) -&gt; Lambda Extraction -&gt; S3 Bronze -&gt; Snowpipe -&gt; Snowflake Bronze -&gt; dbt (Silver) -&gt; Snowpark (Gold) -&gt; RDS PostgreSQL -&gt; API Gateway -&gt; Streamlit. Flux parallèle Vélib : EC2 Kafka Producer -&gt; Kafka -&gt; Consumer -&gt; DynamoDB -&gt; API Gateway.</p>
+</blockquote>
+<h3 id="13-choix-des-formats-de-stockage">1.3 Choix des formats de stockage</h3>
+<table>
+<thead>
+<tr>
+<th>Couche</th>
+<th>Format</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bronze S3</td>
+<td>CSV / JSON / GeoJSON brut</td>
+<td>Fidélité maximale à la source, zone d'arrivage sans transformation</td>
+</tr>
+<tr>
+<td>Bronze Snowflake</td>
+<td>Tables typées VARCHAR / VARIANT</td>
+<td>Requêtable en SQL dès l'ingestion, flexible pour sources hétérogènes</td>
+</tr>
+<tr>
+<td>Silver Snowflake</td>
+<td>Tables columnar Snowflake, normalisées et typées</td>
+<td>Moteur OLAP, performance analytique, jointures géospatiales (ST_CONTAINS)</td>
+</tr>
+<tr>
+<td>Gold S3</td>
+<td>Parquet (snappy)</td>
+<td>Compression vs CSV, lecture columnar, support natif Snowflake et PyArrow</td>
+</tr>
+<tr>
+<td>Gold RDS</td>
+<td>PostgreSQL tables indexées</td>
+<td>Moteur OLTP, latence &lt; 10 ms pour l'API REST, UPSERT natif (ON CONFLICT)</td>
+</tr>
+<tr>
+<td>Vélib temps réel</td>
+<td>DynamoDB items</td>
+<td>Faible latence lecture (&lt;5 ms), pas de schéma fixe</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Comparatif Parquet vs alternatives :</strong></p>
+<table>
+<thead>
+<tr>
+<th>Critère</th>
+<th>Parquet</th>
+<th>Delta Lake</th>
+<th>Iceberg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compression</td>
+<td>Excellente</td>
+<td>Excellente</td>
+<td>Excellente</td>
+</tr>
+<tr>
+<td>Support Snowflake <code>COPY INTO</code></td>
+<td><strong>Natif</strong></td>
+<td>Non</td>
+<td>Non</td>
+</tr>
+<tr>
+<td>Lecture</td>
+<td>Via PyArrow</td>
+<td>Via <code>deltalake</code> lib</td>
+<td>Via <code>pyiceberg</code></td>
+</tr>
+<tr>
+<td>Complexité opérationnelle</td>
+<td><strong>Faible</strong></td>
+<td>Moyenne</td>
+<td>Moyenne</td>
+</tr>
+<tr>
+<td><strong>Décision</strong></td>
+<td><strong>Retenu</strong></td>
+<td>Non Retenu</td>
+<td>Non Retenu</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-justification-des-choix-technologiques">1.4 Justification des choix technologiques</h3>
+<h4 id="snowflake--pourquoi-un-data-warehouse-cloud-">Snowflake  Pourquoi un Data Warehouse Cloud ?</h4>
+<p><strong>Micro-partitions &amp; stockage columnar</strong></p>
+<p>Snowflake stocke toutes les données en <strong>micro-partitions</strong> : des blocs continus de 50 à 500 MB de données non compressées, automatiquement organisés en format <strong>columnar</strong> (chaque colonne stockée indépendamment). À l'exécution d'une requête, Snowflake ne lit que les colonnes référencées et <strong>élimine (prune) les micro-partitions</strong> dont les métadonnées (min/max par colonne) indiquent qu'elles ne contiennent pas les valeurs recherchées. Sur nos tables Silver (millions de mesures AIRPARIF + trafic), un filtre <code>WHERE date_mesure = '2026-07-04'</code> ne parcourt qu'une fraction des micro-partitions.</p>
+<blockquote>
+<p>Source : <a href="https://docs.snowflake.com/en/user-guide/tables-clustering-micropartitions">docs.snowflake.com  Micro-partitions &amp; Data Clustering</a></p>
+</blockquote>
+<p><strong>Séparation stockage / calcul (architecture hybride)</strong></p>
+<p>Snowflake adopte une architecture hybride entre <em>shared-disk</em> et <em>shared-nothing</em> :</p>
+<ul>
+<li>Le stockage centralisé est accessible par tous les nœuds de calcul comme shared-disk.</li>
+<li>Le traitement des requêtes utilise du <strong>MPP</strong> (Massively Parallel Processing) où chaque nœud charge localement une portion du dataset  comme shared-nothing.</li>
+</ul>
+<p>Concrètement : plusieurs Virtual Warehouses peuvent lire les mêmes données <strong>simultanément sans contention</strong>, et le stockage continue d'exister même quand aucun WH n'est actif (AUTO_SUSPEND). C'est ce qui permet d'optimiser les coûts : on ne paie le compute que pendant l'exécution réelle.</p>
+<blockquote>
+<p>Source : <a href="https://docs.snowflake.com/en/user-guide/intro-key-concepts">docs.snowflake.com  Key concepts and architecture</a></p>
+</blockquote>
+<p><strong>Virtual Warehouse  calcul distribué élastique</strong></p>
+<p>Un Virtual Warehouse est un <strong>cluster de compute indépendant</strong> (1 WH = N nœuds selon la taille XS→6XL). Chaque WH est isolé : ses performances ne sont pas affectées par l'activité des autres. Dans notre projet, <code>TRANSFORM_WH</code> (XS, 1 crédit/heure) est utilisé pour dbt + Snowpark + Tasks, avec <code>AUTO_SUSPEND = 60s</code> pour éviter toute facturation hors exécution.</p>
+<blockquote>
+<p>Source : <a href="https://docs.snowflake.com/en/user-guide/warehouses">docs.snowflake.com  Virtual warehouses</a></p>
+</blockquote>
+<p><strong>Result Cache</strong></p>
+<p>Snowflake met en cache le résultat de chaque requête pendant <strong>24 heures</strong>. Si la même requête est ré-exécutée et que les données sous-jacentes n'ont pas changé, le résultat est retourné <strong>sans consommer de crédits WH</strong>. Utile pour les requêtes Snowsight répétitives sur les tables Silver.</p>
+<blockquote>
+<p>Source : <a href="https://docs.snowflake.com/en/user-guide/performance-query-storage">docs.snowflake.com  Optimizing storage for performance</a></p>
+</blockquote>
+<p><strong>Snowpark Python calcul en place</strong></p>
+<p>Snowpark permet d'exécuter du spark directement dans Snowflake, <strong>sans extraire les données</strong>.</p>
+<hr>
+<h4 id="dynamodb--kafka--pourquoi-ce-duo-pour-les-données-temps-réel-vélib-">DynamoDB + Kafka  Pourquoi ce duo pour les données temps-réel Vélib ?</h4>
+<p><strong>DynamoDB : NoSQL sub-milliseconde pour des données schemaless</strong></p>
+<p>L'API expose l'état des ~1500 stations Vélib en temps réel (simulation) : disponibilité des vélos, des docks, coordonnées GPS, statut de la station. Ce payload JSON peut évoluer (ajout de champs, types variables) sans préavis  une table relationnelle avec schéma fixe serait un frein constant aux mises à jour de l'API.</p>
+<p>DynamoDB répond à ce besoin avec propriétés clés :</p>
+<ul>
+<li><strong>Latence en single-digit milliseconds</strong> pour les lectures par clé primaire (GetItem). L'API FastAPI peut interroger l'état courant d'une station en temps réel sans passer par Snowflake (latence secondes) ni RDS (requête OLTP).</li>
+<li><strong>Schemaless</strong> : seule la clé primaire (<code>station_id</code>) est obligatoire ; tous les autres attributs sont libres, permettant l'ingestion du JSON tel quel sans ETL de mapping de colonnes.</li>
+</ul>
+<blockquote>
+<p>Source : <a href="https://docs.aws.amazon.com/whitepapers/latest/big-data-analytics-options/amazon-dynamodb.html">docs.aws.amazon.com  Big Data Analytics Options  DynamoDB</a></p>
+</blockquote>
+<p><strong>Kafka sur EC2 : découplage producteur / consommateur</strong></p>
+<ul>
+<li><strong>Découplage</strong> : le producteur publie dans le topic <code>velib-realtime</code> sans attendre la confirmation DynamoDB (simulation).</li>
+<li><strong>Rejeu</strong> : en cas de panne du consommateur, les messages restent dans le topic et peuvent être re-consommés depuis le dernier offset commité.</li>
+<li><strong>Buffer</strong> : absorbe les pics d'écriture sans surcharger DynamoDB.</li>
+</ul>
+<p><strong>Pourquoi EC2 auto-géré plutôt qu'AWS MSK ?</strong></p>
+<p>AWS propose <strong>Amazon MSK</strong> (Managed Streaming for Apache Kafka), un Kafka entièrement managé (provisioning, patching, haute disponibilité multi-AZ). MSK serait le choix naturel en environnement business : zéro gestion d'infrastructure, SLA garanti, intégration native.</p>
+<p>Cependant, <strong>MSK n'est pas inclus dans le Free Tier AWS</strong>. Dans le cadre de ce projet réalisé sur un compte Free, nous avons choisi d'héberger Kafka directement sur une instance EC2 t3.micro (éligible Free Tier) : le broker Kafka et le consumer <code>consumer_velib.py</code> tournent sur la même instance. Cette approche implique de gérer manuellement l'installation, la configuration et la disponibilité du broker.</p>
+<p>En environnement de production avec un compte AWS payant, la migration vers MSK serait immédiate.</p>
+<hr>
+<h4 id="dbt--pourquoi-industrialiser-les-transformations-sql-">dbt  Pourquoi industrialiser les transformations SQL ?</h4>
+<p><strong>Appliquer le génie logiciel à la data</strong></p>
+<p>Sans dbt, les transformations Silver sont des scripts SQL exécutés manuellement ou dans des tâches Snowflake sans versioning ni tests. dbt apporte les <strong>bonnes pratiques du génie logiciel à l'analytique</strong> :</p>
+<table>
+<thead>
+<tr>
+<th>Pratique</th>
+<th>Implémentation dbt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Versioning</td>
+<td>Chaque modèle est un fichier <code>.sql</code> dans Git</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><code>not_null</code>, <code>unique</code>, <code>accepted_values</code>, SQL custom</td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td>Les modèles sont déployés via GitHub Actions</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td><code>schema.yml</code> auto-généré, consultable via <code>dbt docs serve et dans snowflake</code></td>
+</tr>
+<tr>
+<td>Modularité</td>
+<td>Chaque modèle est un <code>SELECT</code>, réutilisable par <code>ref()</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Source : <a href="https://docs.getdbt.com/docs/introduction">docs.getdbt.com  What is dbt?</a></p>
+</blockquote>
+<p><strong>Lineage DAG et traçabilité</strong></p>
+<p>dbt construit un <strong>DAG (Directed Acyclic Graph)</strong> de tous les modèles, de leurs dépendances jusqu'aux sources. Dans notre pipeline Silver, le DAG expose explicitement la chaîne <code>stg_air_quality → int_air_quality_idf → zones</code> sans avoir à lire le code SQL pour comprendre les dépendances. Cette traçabilité est notamment utile pour identifier l'impact amont d'un changement de schéma source (AIRPARIF, OpenData Paris).</p>
+<blockquote>
+<p>Source : <a href="https://docs.getdbt.com/terms/data-lineage">docs.getdbt.com  Data lineage</a></p>
+</blockquote>
+<p><strong>Tests de qualité des données en Silver</strong></p>
+<p>Chaque modèle Silver est couvert par des tests déclaratifs dans <code>schema.yml</code>. Exemple sur la table <code>stg_air_quality</code> :</p>
+<ul>
+<li><code>station_id</code> : <code>not_null</code> + <code>unique</code></li>
+<li><code>valeur</code> : <code>not_null</code> (aucune mesure vide ne passe en Silver)</li>
+<li><code>polluant</code> : <code>accepted_values</code> (NO2, PM10, PM2.5, O3, SO2)</li>
+</ul>
+<p>Un test en échec lors du <code>dbt test</code> bloque garantissant que les tables Gold (et l'API) ne reçoivent que des données conformes.</p>
+<p><strong>Intégration native Snowflake</strong></p>
+<p>L'adaptateur <code>dbt-snowflake</code> exécute les <code>SELECT</code> directement dans Snowflake via le Virtual Warehouse <code>TRANSFORM_WH</code>. Aucune extraction de données hors de Snowflake n'est nécessaire : dbt matérialise les résultats en tables ou vues dans le schéma Silver via <code>CREATE TABLE AS SELECT</code>.</p>
+<hr>
+<h4 id="snowpipe--pourquoi-une-ingestion-event-driven-plutôt-quun-copy-into-planifié-">Snowpipe  Pourquoi une ingestion event-driven plutôt qu'un COPY INTO planifié ?</h4>
+<p>L'alternative à Snowpipe serait un <code>COPY INTO</code> exécuté sur un Virtual Warehouse à intervalles réguliers. Ce pattern présente un problème fondamental : <strong>le WH est actif et facturé même si aucun fichier n'est arrivé en S3</strong> depuis le dernier run.</p>
+<p>Snowpipe résout ce problème en adoptant une ingestion <strong>pilotée par les événements</strong> :</p>
+<ol>
+<li>Dès qu'un fichier est déposé dans un préfixe Bronze de S3, S3 publie une notification dans la <strong>file SQS gérée par snowflake</strong> associée au Snowpipe.</li>
+<li>Snowpipe consomme le message SQS et charge le fichier dans la table Snowflake cible via un <strong>compute serverless interne</strong>  distinct du Virtual Warehouse, facturé uniquement au volume de données chargé.</li>
+<li>Si aucun fichier n'arrive (pipeline en pause, API source indisponible), <strong>aucun crédit n'est consommé</strong>.</li>
+</ol>
+<p>Les fichiers sont chargés en quelques secondes après leur dépôt en S3, sans intervention humaine et sans coût fixe.</p>
+<blockquote>
+<p>Source : <a href="https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro">docs.snowflake.com  Snowpipe overview</a></p>
+</blockquote>
+<hr>
+<h2 id="2-prérequis--configuration-initiale">2. Prérequis &amp; configuration initiale</h2>
+<h3 id="21-outils-requis">2.1 Outils requis</h3>
+<pre class="hljs"><code><div>python          3.11+
+dbt-snowflake   1.7+
+terraform       1.7+
+aws-cli         2.x
+psql            15+            <span class="hljs-comment"># Pour appliquer le DDL Gold PostgreSQL</span>
+</div></code></pre>
+<h3 id="22-variables-denvironnement">2.2 Variables d'environnement</h3>
+<p>Configurer dans <strong>GitHub Secrets</strong> (CI/CD) et <strong>AWS Secrets Manager</strong> (runtime Lambda) :</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Snowflake</span>
+SNOWFLAKE_ACCOUNT=xxxxx.eu-west-1
+SNOWFLAKE_USER=GITHUB_USER
+SNOWFLAKE_PASSWORD=***
+SNOWFLAKE_ROLE=TRANSFORM_ROLE
+SNOWFLAKE_WAREHOUSE=TRANSFORM_WH
+SNOWFLAKE_DATABASE=SILVER
+
+<span class="hljs-comment"># AWS</span>
+AWS_ACCOUNT_ID=123456789012
+AWS_REGION=eu-west-1
+S3_BUCKET=s3-projet-efrei
+
+<span class="hljs-comment"># RDS PostgreSQL (stocké dans Secrets Manager, jamais en dur)</span>
+RDS_HOST=xxx.rds.amazonaws.com
+RDS_DATABASE=novasight
+RDS_USER=admin
+RDS_PASSWORD=***
+RDS_PORT=5432
+
+<span class="hljs-comment"># Cognito</span>
+COGNITO_USER_POOL_ID=eu-west-1_xxxxx
+COGNITO_CLIENT_ID=xxxxx
+
+<span class="hljs-comment"># API</span>
+API_BASE_URL=https://xxxxx.execute-api.eu-west-1.amazonaws.com/prod
+</div></code></pre>
+<h3 id="23-structure-du-repository">2.3 Structure du repository</h3>
+<pre class="hljs"><code><div>Data_Enginnering_cloud/
+│
+├── .github/workflows/
+│   ├── deploy_ddl.yml              
+│   ├── deploy_dbt.yml             
+│   ├── deploy_infra_snowflake.yml  
+│   ├── deploy_infra_aws.yml        
+│   ├── deploy_api.yml              
+│   └── deploy_gold_ddl.yml        
+│
+├── Snowflake/
+│   ├── DDL/                     
+│   │   ├── R__0.0.0_grants.sql
+│   │   ├── ....
+│   │   └── R__5.0.0_create_export_gold_to_s3.sql   
+│   └── GOLD_DDL/
+│       └── V1__create_gold_tables.sql              
+│
+├── dbt_project/
+│   ├── dbt_project.yml
+│   ├── profiles.yml
+│   ├── macros/generate_schema_name.sql
+│   ├── models/
+│   │   ├── air_quality/
+│   │   │   ├── staging/    
+│   │   │   └── intermediate/ 
+│   │   ├── mobilite/
+│   │   │   ├── staging/    
+│   │   │   └── intermediate/ 
+│   │   └── zones/
+│   │       ├── staging/    
+│   │       └── intermediate/ 
+│   └── tests/
+│       ├── assert_no_future_dates.sql
+│       └── assert_trafic_heures_within_day.sql
+│
+├── infra_snowflake/               
+│   ├── providers.tf
+│   ├── variables.tf
+│   ├── infra.tf              
+│   └── roles.tf                 
+│
+├── infra_aws/
+│   ├── api/           
+│   │   ├── cloudformation/template/
+│   │   └── code/ 
+│   ├── dynamo/                    
+│   │   └── cloudformation/template/
+│   ├── ec2/                        
+│   │   ├── cloudformation/template/
+│   │   └── code/
+│   ├── lambda_extraction/          
+│   │   ├── cloudformation/template/
+│   │   └── code/
+│   ├── lambda_rds_import/     
+│   │   ├── cloudformation/template/
+│   │   └── code/ 
+│   ├── rds/cloudformation/template/
+│   ├── role/cloudformation/template/
+│   ├── s3/cloudformation/template/
+│   └── stepfunction/              
+│       ├── cloudformation/template/
+│       └── code/
+│
+├── streamlit_app/
+│   ├── app.py
+│   ├── api_client.py
+│   ├── auth.py
+│   ├── colorscale.py
+│   └── requirements.txt
+│
+├── docs/
+│   ├── cahier_des_charges.md
+│   └── documentation_technique.md 
+├── images/                         
+│   ├── schema archi tech.png
+│   ├── schema archi api.png
+│   ├── schema deploy snow terraform.png
+│   ├── schema deploy aws cloudformation.png
+│   └── schma authentcongito.png
+├── run_ddl.py                  
+└── run_gold_ddl.py                
+</div></code></pre>
+<hr>
+<h2 id="3-architecture-détaillée-par-couche">3. Architecture détaillée par couche</h2>
+<h3 id="31-bronze--ingestion-brute">3.1 Bronze  Ingestion brute</h3>
+<p><strong>Principe :</strong> Les données sont ingérées sans transformation, stockées telles quelles dans S3, puis chargées automatiquement dans Snowflake via Snowpipe.</p>
+<p><strong>Lambda Extraction</strong> (<code>infra_aws/lambda_extraction/</code>) :</p>
+<ul>
+<li>Déclenchée par <strong>EventBridge Scheduler</strong> (cron quotidien, 07h00 UTC)</li>
+<li>Appelle les APIs sources : AIRPARIF (qualité de l'air), Open Data Paris (vélo, trafic routier)</li>
+<li>Dépose les fichiers bruts dans <code>s3://s3-projet-efrei/bronze/{source}/{year}/{month}/{day}/</code></li>
+</ul>
+<p><strong>Snowpipe</strong> :</p>
+<ul>
+<li>Écoute les événements S3 PUT sur le préfixe <code>bronze/</code> via <strong>AWS SQS</strong></li>
+<li>Charge automatiquement dans les tables Bronze Snowflake (~quelques secondes de latence)</li>
+<li>Pas de transformation : données brutes en VARCHAR ou VARIANT</li>
+</ul>
+<p><strong>Partitionnement Bronze S3 :</strong></p>
+<pre class="hljs"><code><div>s3://s3-projet-efrei/bronze/
+├── air_quality/2026/05/31/FR_E2_2026-05-31.csv
+├── stations/2026/06/08/stations_2026-06-08.json
+├── velo_counts/2026/06/08/velo_20260608.json
+├── zones_administratives/arrondissements.geojson
+└── trafic_counts/2026/06/08/comptage_trafic_2026-06-08.json
+</div></code></pre>
+<p><strong>Politique de rétention Bronze :</strong></p>
+<ul>
+<li>S3 Lifecycle Rule : déplacement vers S3 Glacier Instant Retrieval après <strong>90 jours</strong></li>
+</ul>
+<p><img src="../images/cycle_vie_s3.png" alt="cycle de vie s3"></p>
+<p><strong>Stratégie d'ingestion :</strong></p>
+<table>
+<thead>
+<tr>
+<th>Stratégie</th>
+<th>Approche retenue</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full load Bronze</td>
+<td>Oui</td>
+<td>Sources fournissent des snapshots journaliers complets</td>
+</tr>
+<tr>
+<td>Incrémental Silver</td>
+<td>Oui (<code>dbt incremental</code>)</td>
+<td><code>unique_key</code> + stratégie <code>incremental</code> dbt</td>
+</tr>
+<tr>
+<td>Delta Gold</td>
+<td>Oui (watermark)</td>
+<td>Table <code>GOLD_WATERMARK</code>  filtre <code>date &gt; last_date</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="32-silver--transformation-dbt">3.2 Silver  Transformation dbt</h3>
+<p><strong>Principe :</strong> dbt transforme les tables Bronze en tables Silver propres, typées et dédupliquées.</p>
+<p><strong>Structure des modèles dbt :</strong></p>
+<pre class="hljs"><code><div>dbt_project/models/
+├── air_quality/
+│   ├── staging/          stg_air_quality.sql, stg_coordonnees.sql
+│   └── intermediate/     int_air_quality_idf.sql
+├── mobilite/
+│   ├── staging/          stg_trafic_velo.sql, stg_trafic_routier.sql, stg_stations_velib.sql
+│   └── intermediate/     int_velo_daily.sql, int_trafic_daily.sql
+└── zones/
+    ├── staging/          stg_arrondissements.sql
+    └── intermediate/     int_air_quality_zoned.sql, int_velo_zoned.sql, int_trafic_zoned.sql
+</div></code></pre>
+<p><strong>Transformations appliquées :</strong></p>
+<table>
+<thead>
+<tr>
+<th>Transformation</th>
+<th>Couche</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Typage</td>
+<td>staging</td>
+<td>Cast VARCHAR/VARIANT vers types natifs (DATE, FLOAT, INT)</td>
+</tr>
+<tr>
+<td>Déduplication</td>
+<td>intermediate</td>
+<td><code>QUALIFY ROW_NUMBER() OVER (PARTITION BY pk ORDER BY ...) = 1</code></td>
+</tr>
+<tr>
+<td>Filtrage géographique</td>
+<td><code>int_air_quality_idf</code></td>
+<td>Filtre IDF uniquement (lat/lon)</td>
+</tr>
+<tr>
+<td>Jointure spatiale</td>
+<td><code>int_*_zoned</code></td>
+<td><code>ST_CONTAINS(geometry, ST_MAKEPOINT(lon, lat))</code></td>
+</tr>
+<tr>
+<td>Agrégation journalière</td>
+<td><code>int_air_quality_zoned</code></td>
+<td><code>AVG(valeur)</code>, <code>MAX(valeur)</code> GROUP BY date + site + polluant</td>
+</tr>
+<tr>
+<td>Renommage</td>
+<td>tous staging</td>
+<td>Colonnes en snake_case, noms métier explicites</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tests de qualité dbt automatisés (<code>schema.yml</code> + <code>tests/</code>) :</strong></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># schema.yml</span>
+<span class="hljs-attr">tests:</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">not_null</span>        <span class="hljs-comment"># Clés primaires et colonnes critiques</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">unique</span>          <span class="hljs-comment"># Unicité des clés primaires</span>
+  <span class="hljs-bullet">-</span> <span class="hljs-string">accepted_values</span> <span class="hljs-comment"># Polluants : [NO2, PM10, PM2.5, O3, SO2]</span>
+
+<span class="hljs-comment"># tests/assert_no_future_dates.sql</span>
+<span class="hljs-comment">#   -&gt; date_mesure &lt;= current_date()</span>
+
+<span class="hljs-comment"># tests/assert_trafic_heures_within_day.sql</span>
+<span class="hljs-comment">#   -&gt; nb_heures_bloque + fluide + dense + saturé &lt;= 24</span>
+</div></code></pre>
+<hr>
+<h3 id="33-gold--snowpark-python">3.3 Gold  Snowpark Python</h3>
+<p><strong>Principe :</strong> Une Stored Procedure Snowpark (spark sur snowflake) Python calcule les 7 datamarts Gold depuis les tables Silver tout en utilisant la puissance de snowflake avec un calcul distribué dans le warehouse, gère le delta via watermark, et exporte en Parquet vers S3.</p>
+<p><strong>Stored Procedure <code>SP_EXPORT_GOLD_TO_S3</code> :</strong>
+<img src="../images/sp.png" alt="SP_GOLD"></p>
+<p><strong>Table de watermark <code>GOLD_WATERMARK</code> :</strong></p>
+<p><img src="../images/watermark.png" alt="watermark gold"></p>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Comportement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Premier run (watermark = 1970-01-01)</td>
+<td>Export complet de tout l'historique disponible</td>
+</tr>
+<tr>
+<td>Runs suivants</td>
+<td>Export uniquement des dates <code>&gt; last_date</code></td>
+</tr>
+<tr>
+<td>Re-run le même jour</td>
+<td>Pas de doublon (<code>overwrite=True</code> sur le fichier S3)</td>
+</tr>
+<tr>
+<td>Échec Lambda RDS</td>
+<td>Watermark non avancé -&gt; données réexportées au run suivant</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Les 7 datamarts Gold exportés :</strong></p>
+<pre class="hljs"><code><div>s3://s3-projet-efrei/gold_export/
+├── dm_air_quality_daily/       20260701.parquet
+├── dm_alertes_pollution/       20260701.parquet
+├── dm_velo_daily/              20260701.parquet
+├── dm_trafic_routier_daily/    20260701.parquet
+├── dm_smartcity_kpi_daily/     20260701.parquet
+├── dm_zone_kpi_daily/          20260701.parquet
+└── ref_arrondissements/        20260701.parquet
+</div></code></pre>
+<hr>
+<h3 id="34-vélib-temps-réel--kafka--dynamodb">3.4 Vélib temps réel  Kafka + DynamoDB</h3>
+<p><strong>Principe :</strong> Le flux Vélib temps réel est simulé dans le cadre de notre projet data engineering cloud via un producer en utilisant l'api velib. Il utilise un pipeline séparé basé sur Kafka, indépendant du pipeline batch quotidien. Dans un context réel se sont des capteurs IOT qui envoient des données en temps réel mais nous ne pouvons pas reproduire cela.</p>
+<pre class="hljs"><code><div>API Vélib temps réel 
+    -&gt; EC2 Kafka Producer (producer_velib.py)
+    -&gt; Apache Kafka (EC2 t3.micro, eu-west-1)
+    -&gt; EC2 Kafka Consumer (consumer_velib.py)
+    -&gt; DynamoDB (table stations_velib)
+    -&gt; API Gateway -&gt; Lambda FastAPI -&gt; Streamlit
+</div></code></pre>
+<hr>
+<h3 id="35-serving-layer--lambda-rds-import">3.5 Serving Layer  Lambda RDS Import</h3>
+<p><strong>Pourquoi RDS PostgreSQL et pas Snowflake directement ?</strong></p>
+<p>Le pipeline analytique utilise Snowflake comme moteur <strong>OLAP</strong> (Online Analytical Processing) : il est optimisé pour des requêtes complexes sur de grands volumes (scans complets, agrégations, jointures multi-tables), avec une latence de l'ordre de la <strong>seconde</strong>. Ce moteur convient parfaitement aux traitements dbt et Snowpark qui s'exécutent une fois par jour.</p>
+<p>L'API REST exposée au dashboard Streamlit a des contraintes radicalement différentes : chaque appel utilisateur doit retourner une réponse en <strong>&lt; 50 ms</strong>. C'est le domaine de l'<strong>OLTP</strong> (Online Transactional Processing), optimisé pour des lectures indexées sur des volumes maîtrisés.</p>
+<p>Les 7 datamarts Gold sont calculés une fois par jour dans Snowflake (Snowpark), exportés en Parquet vers S3, puis chargés dans RDS via UPSERT. L'API interroge uniquement RDS Snowflake n'est jamais sollicité en temps réel.</p>
+<p><strong>Principe :</strong> Chaque Parquet déposé dans S3 Gold déclenche automatiquement une Lambda via EventBridge &quot;Put Event&quot; qui charge les données dans RDS via UPSERT idempotent.</p>
+<p><strong>Flux :</strong></p>
+<pre class="hljs"><code><div>S3 PUT gold_export/dm_air_quality_daily/20260701.parquet
+    -&gt; EventBridge Rule (object created)
+    -&gt; Lambda RDS Import
+        -&gt; RDS PostgreSQL dm_air_quality_daily
+</div></code></pre>
+<hr>
+<h3 id="36-exposition--api-gateway--streamlit">3.6 Exposition  API Gateway + Streamlit</h3>
+<p><img src="../images/schema archi api.png" alt="Architecture exposition API NovaSight"></p>
+<p><strong>Flux d'authentification Cognito (diagramme de séquence) :</strong></p>
+<p><img src="../images/schma authentcongito.png" alt="Diagramme de séquence authentification Cognito -&gt; API Gateway -&gt; Lambda FastAPI"></p>
+<p><strong>FastAPI</strong> (<code>infra_aws/api/code/main.py</code>) déployée sur Lambda + Mangum (adapter ASGI) :</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /air-quality</code></td>
+<td>RDS <code>dm_air_quality_daily</code></td>
+</tr>
+<tr>
+<td><code>GET /air-quality/alertes</code></td>
+<td>RDS <code>dm_alertes_pollution</code></td>
+</tr>
+<tr>
+<td><code>GET /mobilite/trafic/daily-avg</code></td>
+<td>RDS <code>dm_trafic_routier_daily</code></td>
+</tr>
+<tr>
+<td><code>GET /mobilite/velo</code></td>
+<td>RDS <code>dm_velo_daily</code></td>
+</tr>
+<tr>
+<td><code>GET /mobilite/velib</code></td>
+<td>DynamoDB</td>
+</tr>
+<tr>
+<td><code>GET /kpi/summary</code></td>
+<td>RDS <code>dm_smartcity_kpi_daily</code></td>
+</tr>
+<tr>
+<td><code>GET /zones/kpi</code></td>
+<td>RDS <code>dm_zone_kpi_daily</code></td>
+</tr>
+<tr>
+<td><code>GET /zones/arrondissements</code></td>
+<td>RDS <code>ref_arrondissements</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="4-guide-de-déploiement">4. Guide de déploiement</h2>
+<h3 id="41-ordre-de-déploiement">4.1 Ordre de déploiement</h3>
+<pre class="hljs"><code><div>1. Infrastructure Snowflake (Terraform : warehouses, rôles, stages)
+2. DDL Snowflake (schémas, tables, Snowpipe, Tasks, SP Snowpark)
+3. Infrastructure AWS (CloudFormation : S3, RDS, Lambda, EC2, DynamoDB, Cognito, API Gateway, SNS, KMS)
+4. dbt (modèles Silver : staging + intermediate + zones)
+5. DDL Gold PostgreSQL (V1__create_gold_tables.sql sur RDS)
+6. Lambda API FastAPI (packaging + deploy)
+7. Streamlit Cloud (connexion GitHub + secrets)
+</div></code></pre>
+<h3 id="42-infrastructure-snowflake-terraform">4.2 Infrastructure Snowflake (Terraform)</h3>
+<p><img src="../images/schema deploy snow terraform.png" alt="CI/CD Snowflake  GitHub Actions -&gt; Terraform -&gt; Snowflake"></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Déploiement Terraform</span>
+<span class="hljs-built_in">cd</span> infra_snowflake
+terraform init
+terraform plan -var-file=<span class="hljs-string">&quot;variables.tf&quot;</span>
+terraform apply -auto-approve
+
+<span class="hljs-comment"># Terraform crée : TRANSFORM_WH, SILVER database, roles (TRANSFORM_ROLE,</span>
+<span class="hljs-comment"># DATA_ANALYST_ROLE, INGESTION_ROLE), stage S3 (Storage Integration)</span>
+</div></code></pre>
+<h3 id="43-ddl-snowflake">4.3 DDL Snowflake</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># Ou via le script Python fourni</span>
+python run_ddl.py
+</div></code></pre>
+<h3 id="44-infrastructure-aws-cloudformation">4.4 Infrastructure AWS (CloudFormation)</h3>
+<p><img src="../images/schema deploy aws cloudformation.png" alt="CI/CD AWS  GitHub Actions -&gt; CloudFormation -&gt; Services AWS"></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># 1. Rôles IAM </span>
+aws cloudformation deploy \
+  --template-file infra_aws/role/cloudformation/template/role-projet-efrei.json \
+  --stack-name projet-efrei-iam --capabilities CAPABILITY_IAM
+
+<span class="hljs-comment"># 2. S3 </span>
+aws cloudformation deploy \
+  --template-file infra_aws/s3/cloudformation/template/s3-projet-efrei.json \
+  --stack-name projet-efrei-s3
+</div></code></pre>
+<h3 id="45-dbt-silver">4.5 dbt (Silver)</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> dbt_project
+pip install snowflake-cli
+snow dbt deploy
+</div></code></pre>
+<h3 id="46-ddl-gold-postgresql">4.6 DDL Gold PostgreSQL</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># via le script Python fourni</span>
+python run_gold_ddl.py
+</div></code></pre>
+<h3 id="47-streamlit-cloud">4.7 Streamlit Cloud</h3>
+<ol>
+<li>Connecter le repository GitHub à <a href="https://share.streamlit.io">share.streamlit.io</a></li>
+<li>Sélectionner <code>Data_Enginnering_cloud/streamlit_app/app.py</code></li>
+<li>Configurer les secrets dans l'interface Streamlit Cloud</li>
+<li>Deployer</li>
+</ol>
+<h2 id="5-orchestration">5. Orchestration</h2>
+<h3 id="51-dag-des-tâches-aws-et-snowflake">5.1 DAG des tâches aws et Snowflake</h3>
+<p>L'orchestration batch est assurée par <strong>Step Function et Snowflake Tasks</strong> chaînées. Aucun outil externe (Airflow, Prefect) n'est requis.</p>
+<p><img src="../images/sf.png" alt="Step Function"></p>
+<p><img src="../images/task.png" alt="Task"></p>
+<h3 id="52-gestion-des-erreurs--retry">5.2 Gestion des erreurs &amp; retry</h3>
+<table>
+<thead>
+<tr>
+<th>Composant</th>
+<th>Comportement en cas d'erreur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Snowflake Task</td>
+<td>Retry automatique configurable mais pas fait</td>
+</tr>
+<tr>
+<td><code>SP_EXPORT_GOLD_TO_S3</code></td>
+<td>Watermark non mis à jour si échec donc données réexportées au run suivant</td>
+</tr>
+<tr>
+<td>Lambda RDS Import</td>
+<td>Retry dès dépot des fichiers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-scheduling-complet">5.3 Scheduling complet</h3>
+<table>
+<thead>
+<tr>
+<th>Heure UTC</th>
+<th>Action</th>
+<th>Durée estimée</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>07h00</td>
+<td>Lambda Extraction -&gt; S3 Bronze</td>
+<td>~1 min</td>
+</tr>
+<tr>
+<td>Automatique via SQS</td>
+<td>Snowpipe -&gt; Snowflake Bronze</td>
+<td>~1 min</td>
+</tr>
+<tr>
+<td>08h00</td>
+<td>TASK_RUN_DBT_ALL</td>
+<td>~1 min</td>
+</tr>
+<tr>
+<td>Automatique avec dépendence Task 1</td>
+<td>TASK_EXPORT_GOLD_TO_S3</td>
+<td>~1 min</td>
+</tr>
+<tr>
+<td>Automatique via EventBridge</td>
+<td>~2 min</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-monitoring--alerting">6. Monitoring &amp; Alerting</h2>
+<h3 id="61-architecture-sns-alerting">6.1 Architecture SNS Alerting</h3>
+<p>Toutes les alertes convergent vers <strong>un seul topic SNS</strong> <code>novasight-alerts</code> qui envoie un email à l'équipe. Trois sources distinctes y publient :</p>
+<pre class="hljs"><code><div>Step Functions
+Lambda RDS Import 
+Snowflake Task FAILED 
+</div></code></pre>
+<table>
+<thead>
+<tr>
+<th>Ressource</th>
+<th>Type</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SNS Subscription</code></td>
+<td>Email</td>
+<td>Envoi immédiat</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../images/sns_notif.png" alt="Capture Notification"></p>
+<h3 id="62-monitoring-snowflake-sql">6.2 Monitoring Snowflake (SQL)</h3>
+<p>Des requêtes pour suivre les logs et à consulter dans Snowsight (Interface Snowflake) :</p>
+<p><img src="../images/log_snow.png" alt="Capture Log task sur Snowsight"></p>
+<h3 id="63-snowflake-notification-integration">6.3 Snowflake Notification Integration</h3>
+<p>Les tasks Snowflake (<code>TASK_RUN_DBT_ALL</code> -&gt; <code>TASK_EXPORT_GOLD_TO_S3</code>) publient sur le même topic SNS en cas d'échec via une <strong>Notification Integration</strong></p>
+<h3 id="64-sla-et-alerting">6.4 SLA et alerting</h3>
+<table>
+<thead>
+<tr>
+<th>Canal</th>
+<th>Déclencheur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Email via SNS (EventBridge)</td>
+<td>Step Functions FAILED / TIMED_OUT / ABORTED</td>
+</tr>
+<tr>
+<td>Email via SNS (CloudWatch)</td>
+<td>Lambda RDS Import erreur</td>
+</tr>
+<tr>
+<td>Email via SNS (SF Notification)</td>
+<td>Task Snowflake FAILED</td>
+</tr>
+</tbody>
+</table>
+<p><strong>SLA cibles :</strong></p>
+<ul>
+<li>Pipeline complet opérationnel</li>
+<li>Disponibilité dashboard Streamlit Cloud : 99,9 %</li>
+<li>Fraîcheur données : mise à jour avant 09h00 UTC</li>
+</ul>
+<hr>
+<h2 id="7-cicd--github-actions">7. CI/CD  GitHub Actions</h2>
+<h3 id="71-vue-densemble-des-6-workflows">7.1 Vue d'ensemble des 6 workflows</h3>
+<p><img src="../images/gh_actions.png" alt="Capture CI/CD GITHUB Actions"></p>
+<h3 id="76-politique-de-branches">7.6 Politique de branches</h3>
+<table>
+<thead>
+<tr>
+<th>Branche</th>
+<th>Usage</th>
+<th>Protection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main</code></td>
+<td>Production</td>
+<td>PR requise, tests dbt obligatoires, review peer</td>
+</tr>
+<tr>
+<td><code>dev_amar</code></td>
+<td>Développement Amar</td>
+<td>Tests requis</td>
+</tr>
+<tr>
+<td><code>dev_amine</code></td>
+<td>Développement Amine</td>
+<td>Tests requis</td>
+</tr>
+<tr>
+<td><code>feature/*</code></td>
+<td>Nouvelles fonctionnalités</td>
+<td>Merge via PR uniquement</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="8-analyse-finops">8. Analyse FinOps</h2>
+<blockquote>
+<p><strong>Périmètre tarifaire :</strong></p>
+<ul>
+<li><strong>AWS</strong> : région <code>eu-west-3</code> (Paris)  tarifs on-demand officiels AWS Paris.</li>
+<li><strong>Snowflake</strong> : édition <strong>Business Critical</strong> sur AWS EU.</li>
+<li><strong>Hypothèses snowflake</strong> : 1 pipeline batch/jour, 30 jours/mois, Warehouse XS actif ~5 min/jour donc 150min/mois</li>
+</ul>
+</blockquote>
+<h3 id="81-phase-développement--recette">8.1 Phase développement &amp; recette</h3>
+<h4 id="snowflake--35-consommés--400-crédits-trial">Snowflake  $35 consommés / $400 crédits trial</h4>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Usage dev</th>
+<th>Coût dev</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Snowflake Trial (Business Critical, WH XS)</td>
+<td>30 jours</td>
+<td><strong>$35</strong> sur $400 crédits offerts</td>
+</tr>
+</tbody>
+</table>
+<h4 id="aws--7-consommés--200-crédits-trial">AWS  $7 consommés / $200 crédits trial</h4>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Usage dev</th>
+<th>Coût dev</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS Trial</td>
+<td>6 mois</td>
+<td><strong>$7</strong> sur $200 crédits offerts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-exploitation-quotidienne--business-critical--aws-paris-eu-west-3">8.2 Exploitation quotidienne  Business Critical · AWS Paris (eu-west-3)</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Usage mensuel</th>
+<th>Calcul détaillé</th>
+<th>Coût/mois</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Snowflake  Compute WH XS</strong></td>
+<td>2,5 crédits</td>
+<td>5 min/j × 30 j = 2,5 crédits × $5,20/crédit</td>
+<td><strong>$13,00</strong></td>
+</tr>
+<tr>
+<td><strong>Snowflake  Snowpipe serverless</strong></td>
+<td>0,00411 crédit serverless</td>
+<td>0,00411 × $5,20</td>
+<td><strong>$0,02</strong></td>
+</tr>
+<tr>
+<td><strong>Snowflake  Stockage</strong></td>
+<td>100 MO compressés</td>
+<td>0,0001 TB × 24 $/TB/mois</td>
+<td><strong>$0,0024</strong></td>
+</tr>
+<tr>
+<td><strong>Amazon RDS db.t3.micro</strong></td>
+<td></td>
+<td></td>
+<td><strong>$36,24</strong></td>
+</tr>
+<tr>
+<td><strong>EC2 t3.micro</strong> (Kafka)</td>
+<td></td>
+<td></td>
+<td><strong>$16,992</strong></td>
+</tr>
+<tr>
+<td><strong>Amazon S3</strong></td>
+<td>~2 GB</td>
+<td>$0,024/GB × 2 GB Standard</td>
+<td><strong>$0,048</strong></td>
+</tr>
+<tr>
+<td><strong>AWS Lambda</strong> (3 fonctions)</td>
+<td>15000 invocations/mois</td>
+<td>&lt; 1 M req + &lt; 400 000 GB-s -&gt; <strong>free tier permanent</strong></td>
+<td><strong>$0,0130386</strong></td>
+</tr>
+<tr>
+<td><strong>Amazon API Gateway</strong> (REST)</td>
+<td>15000 requêtes</td>
+<td>Premier palier 300M : $1,17/M</td>
+<td><strong>$1,17</strong></td>
+</tr>
+<tr>
+<td><strong>Amazon DynamoDB</strong> (on-demand)</td>
+<td></td>
+<td></td>
+<td><strong>$48,66</strong></td>
+</tr>
+<tr>
+<td><strong>AWS Step Functions</strong></td>
+<td>~60 transitions</td>
+<td>4 000 transitions gratuites permanent</td>
+<td><strong>$0</strong></td>
+</tr>
+<tr>
+<td><strong>AWS KMS</strong> (3 clés CMK)</td>
+<td></td>
+<td></td>
+<td><strong>$0</strong></td>
+</tr>
+<tr>
+<td><strong>AWS Secrets Manager</strong></td>
+<td>1 secret</td>
+<td>1 × $0,40</td>
+<td><strong>$0,40</strong></td>
+</tr>
+<tr>
+<td><strong>EventBridge</strong> (S3 events Gold)</td>
+<td></td>
+<td></td>
+<td><strong>$0</strong></td>
+</tr>
+<tr>
+<td><strong>Amazon Cognito</strong></td>
+<td>&lt; 50 000 MAU</td>
+<td>Free tier permanent</td>
+<td><strong>$0</strong></td>
+</tr>
+<tr>
+<td><strong>Amazon SNS</strong></td>
+<td>&lt; 100 000 MAU</td>
+<td>100000 email = <strong>$2</strong></td>
+<td><strong>$0</strong></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>TOTAL MENSUEL</strong></td>
+<td></td>
+<td></td>
+<td><strong>~$117</strong></td>
+</tr>
+<tr>
+<td><strong>TOTAL ANNUEL</strong></td>
+<td></td>
+<td></td>
+<td><strong>~$1404</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="83-documentation-officielle-des-tarifs">8.3 Documentation officielle des tarifs</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Lien documentation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Snowflake  Tarifs Business Critical</td>
+<td><a href="https://www.snowflake.com/pricing/">snowflake.com/pricing</a></td>
+</tr>
+<tr>
+<td>Snowflake  Trial credits</td>
+<td><a href="https://docs.snowflake.com/en/user-guide/admin-trial-account">docs.snowflake.com/user-guide/admin-trial-account</a></td>
+</tr>
+<tr>
+<td>Snowflake  Coût stockage &amp; compute</td>
+<td><a href="https://docs.snowflake.com/en/user-guide/cost-understanding-overall">docs.snowflake.com/cost-understanding-overall</a></td>
+</tr>
+<tr>
+<td>Snowflake  Facturation Snowpipe</td>
+<td><a href="https://docs.snowflake.com/en/user-guide/data-load-snowpipe-billing">docs.snowflake.com/data-load-snowpipe-billing</a></td>
+</tr>
+<tr>
+<td>AWS  Free Tier (tous services)</td>
+<td><a href="https://aws.amazon.com/free/">aws.amazon.com/free</a></td>
+</tr>
+<tr>
+<td>Amazon S3  Tarifs eu-west-3</td>
+<td><a href="https://aws.amazon.com/s3/pricing/">aws.amazon.com/s3/pricing</a></td>
+</tr>
+<tr>
+<td>AWS Lambda  Tarifs</td>
+<td><a href="https://aws.amazon.com/lambda/pricing/">aws.amazon.com/lambda/pricing</a></td>
+</tr>
+<tr>
+<td>Amazon RDS PostgreSQL  Tarifs eu-west-3</td>
+<td><a href="https://aws.amazon.com/rds/postgresql/pricing/">aws.amazon.com/rds/postgresql/pricing</a></td>
+</tr>
+<tr>
+<td>Amazon DynamoDB  Tarifs eu-west-3</td>
+<td><a href="https://aws.amazon.com/dynamodb/pricing/">aws.amazon.com/dynamodb/pricing</a></td>
+</tr>
+<tr>
+<td>Amazon API Gateway  Tarifs eu-west-3</td>
+<td><a href="https://aws.amazon.com/api-gateway/pricing/">aws.amazon.com/api-gateway/pricing</a></td>
+</tr>
+<tr>
+<td>Amazon EC2  Tarifs on-demand eu-west-3</td>
+<td><a href="https://aws.amazon.com/ec2/pricing/on-demand/">aws.amazon.com/ec2/pricing/on-demand</a></td>
+</tr>
+<tr>
+<td>AWS Step Functions  Tarifs</td>
+<td><a href="https://aws.amazon.com/step-functions/pricing/">aws.amazon.com/step-functions/pricing</a></td>
+</tr>
+<tr>
+<td>Amazon CloudWatch  Tarifs</td>
+<td><a href="https://aws.amazon.com/cloudwatch/pricing/">aws.amazon.com/cloudwatch/pricing</a></td>
+</tr>
+<tr>
+<td>AWS KMS  Tarifs</td>
+<td><a href="https://aws.amazon.com/kms/pricing/">aws.amazon.com/kms/pricing</a></td>
+</tr>
+<tr>
+<td>AWS Secrets Manager  Tarifs</td>
+<td><a href="https://aws.amazon.com/secrets-manager/pricing/">aws.amazon.com/secrets-manager/pricing</a></td>
+</tr>
+<tr>
+<td>Amazon EventBridge  Tarifs</td>
+<td><a href="https://aws.amazon.com/eventbridge/pricing/">aws.amazon.com/eventbridge/pricing</a></td>
+</tr>
+<tr>
+<td>Amazon Cognito  Tarifs</td>
+<td><a href="https://aws.amazon.com/cognito/pricing/">aws.amazon.com/cognito/pricing</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="84-optimisations-finops">8.4 Optimisations FinOps</h3>
+<table>
+<thead>
+<tr>
+<th>Optimisation</th>
+<th>Économie estimée</th>
+<th>Détail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AUTO_SUSPEND = 60s</code> Snowflake WH</td>
+<td>−40 % compute</td>
+<td><code>ALTER WAREHOUSE TRANSFORM_WH SET AUTO_SUSPEND = 60</code></td>
+</tr>
+<tr>
+<td>Parquet snappy vs CSV</td>
+<td>−75 % stockage S3</td>
+<td>Natif dans <code>COPY INTO</code> Snowflake (<code>FILE_FORMAT = PARQUET</code>)</td>
+</tr>
+<tr>
+<td>S3 Lifecycle Rules Bronze</td>
+<td>−60 % stockage Bronze</td>
+<td>Glacier Instant après 90 j</td>
+</tr>
+<tr>
+<td>RDS Reserved Instance 1 an</td>
+<td>−20 % vs on-demand</td>
+<td>~$28,99/mois vs $36,24/mois (Paris eu-west-3)</td>
+</tr>
+<tr>
+<td>EC2 Reserved Instance 1 an (Kafka)</td>
+<td>−19 % vs on-demand</td>
+<td>~$13,76/mois vs $16,992/mois (Paris eu-west-3)</td>
+</tr>
+<tr>
+<td>S3 Bucket Key KMS</td>
+<td>−99 % appels KMS API</td>
+<td><code>BucketKeyEnabled: true</code> 1 clé de données par bucket au lieu de 1 par objet</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="9-sécurité--chiffrement-kms--rgpd">9. Sécurité  Chiffrement KMS &amp; RGPD</h2>
+<h3 id="91-chiffrement-avec-clé-kms-privée-cmk">9.1 Chiffrement avec clé KMS privée (CMK)</h3>
+<p><strong>Implémenté :</strong></p>
+<ul>
+<li><strong>S3</strong>  SSE-KMS avec CMK <code>alias/projet-efrei-s3</code>, <code>BucketKeyEnabled: true</code>.</li>
+<li><strong>RDS PostgreSQL</strong>  <code>StorageEncrypted: true</code> + CMK <code>alias/projet-efrei-rds</code> (instance <code>rds-projet-efrei</code>).</li>
+</ul>
+<p><strong>Clé AWS managée :</strong></p>
+<ul>
+<li>Lambda et Secrets Manager utilisent le chiffrement par défaut AWS (pas de CMK, sans surcoût).</li>
+</ul>
+<p><img src="../images/kms_s3.png" alt="chiffrement s3"></p>
+<p><img src="../images/kms_rds.png" alt="chiffrement rds"></p>
+<h3 id="92-accès-s3">9.2 Accès S3</h3>
+<p>L'accès public au compartiment et objets est désactivé aux public</p>
+<p><img src="../images/s3_public.png" alt="accès s3"></p>
+<h3 id="93-rôles-et-privileges">9.3 Rôles et privileges</h3>
+<h4 id="aws-iam">AWS IAM</h4>
+<p>Chaque rôle est <strong>scopé au strict nécessaire</strong> : aucun wildcard <code>*</code> sur les ressources, chaque action est restreinte au service et au préfixe qu'il manipule réellement.</p>
+<h4 id="snowflake">Snowflake</h4>
+<p>Les rôles Snowflake suivent le même principe : chaque rôle n'accède qu'aux schémas et objets nécessaires à sa fonction.</p>
+<table>
+<thead>
+<tr>
+<th>Rôle Snowflake</th>
+<th>Utilisé par</th>
+<th>Périmètre</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRANSFORM_ROLE</code></td>
+<td>dbt, Snowpark SP, Tasks</td>
+<td>Lecture/écriture sur les schémas Silver et Bronze, exécution des Tasks et Stored Procedures, accès au Warehouse <code>TRANSFORM_WH</code></td>
+</tr>
+<tr>
+<td><code>GITHUB_ROLE</code></td>
+<td>GitHub Actions CI/CD uniquement</td>
+<td>Déploiement infra et DDL (CREATE/ALTER objets et INTEGRATION), pas d'accès aux données métier</td>
+</tr>
+<tr>
+<td><code>ANALYST_ROLE</code></td>
+<td>Data analysts, Snowsight</td>
+<td>SELECT uniquement sur Silver, aucun accès Bronze brut, aucune écriture</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Principe appliqué :</strong> aucun rôle applicatif ou data n'a de droits <code>ACCOUNTADMIN</code> ou <code>SYSADMIN</code>. Les opérations d'administration (création d'intégrations, gestion des objets) sont isolées dans <code>GITHUB_ROLE</code> pour le CI/CD</p>
+</blockquote>
+<hr>
+<h3 id="94-cartographie-des-données--data-mapping-rgpd">9.4 Cartographie des données  Data Mapping RGPD</h3>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Champs</th>
+<th>Catégorie RGPD</th>
+<th>Niveau de risque</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Qualité de l'air (AIRPARIF)</td>
+<td>code_site, valeur, polluant</td>
+<td>Données publiques</td>
+<td><strong>Nul</strong></td>
+<td>Aucune</td>
+</tr>
+<tr>
+<td>Trafic vélo</td>
+<td>compteur_id, total_passages</td>
+<td>Données agrégées</td>
+<td><strong>Nul</strong></td>
+<td>Aucune</td>
+</tr>
+<tr>
+<td>Trafic routier</td>
+<td>arc_id, libelle_arc, débit</td>
+<td>Données de voirie</td>
+<td><strong>Nul</strong></td>
+<td>Aucune</td>
+</tr>
+<tr>
+<td>Vélib temps réel</td>
+<td>stationId, num_bikes_available</td>
+<td>Données publiques</td>
+<td><strong>Nul</strong></td>
+<td>Aucune</td>
+</tr>
+<tr>
+<td>Coordonnées GPS stations</td>
+<td>latitude, longitude</td>
+<td>Localisation infrastructures publiques</td>
+<td><strong>Faible</strong></td>
+<td>Maintenues en clair (public)</td>
+</tr>
+<tr>
+<td>Utilisateurs dashboard</td>
+<td>email (Cognito)</td>
+<td>Donnée personnelle</td>
+<td><strong>Moyen</strong></td>
+<td>Géré par Cognito uniquement, hors pipeline data</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Les données traitées par le pipeline Bronze -&gt; Gold sont <strong>entièrement publiques et anonymes</strong>. Le seul traitement de données personnelles concerne les comptes utilisateurs du dashboard, gérés exclusivement par <strong>Amazon Cognito</strong>.</p>
+</blockquote>
+<h3 id="95-registre-de-traitement-simplifié">9.5 Registre de traitement simplifié</h3>
+<table>
+<thead>
+<tr>
+<th>Traitement</th>
+<th>Finalité</th>
+<th>Base légale</th>
+<th>Données</th>
+<th>Rétention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ingestion mesures air</td>
+<td>Analyse environnementale académique</td>
+<td>Intérêt légitime</td>
+<td>Mesures publiques AIRPARIF</td>
+<td>90 j Bronze, illimité Silver</td>
+</tr>
+<tr>
+<td>Comptage vélo/trafic</td>
+<td>Analyse mobilité urbaine</td>
+<td>Intérêt légitime</td>
+<td>Comptages anonymes</td>
+<td>90 j Bronze, illimité Silver</td>
+</tr>
+<tr>
+<td>Vélib temps réel</td>
+<td>Information mobilité</td>
+<td>Intérêt légitime</td>
+<td>Disponibilité stations publiques</td>
+<td>dernier état seulement</td>
+</tr>
+<tr>
+<td>Authentification dashboard</td>
+<td>Contrôle d'accès</td>
+<td>Consentement</td>
+<td>Email + mot de passe hashé (Cognito) + token</td>
+<td>Durée du projet</td>
+</tr>
+</tbody>
+</table>
+<h3 id="96-politique-de-rétention-des-données">9.6 Politique de rétention des données</h3>
+<table>
+<thead>
+<tr>
+<th>Couche</th>
+<th>Support</th>
+<th>Rétention</th>
+<th>Mécanisme</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bronze</td>
+<td>S3</td>
+<td>90 jours</td>
+<td>S3 Lifecycle : Glacier après 90 j</td>
+</tr>
+<tr>
+<td>Silver</td>
+<td>Snowflake</td>
+<td>Illimité</td>
+<td>Conservation analytique</td>
+</tr>
+<tr>
+<td>Gold</td>
+<td>S3</td>
+<td>90 jours (delta)</td>
+<td>Lifecycle après 90 j</td>
+</tr>
+<tr>
+<td>Gold</td>
+<td>RDS PostgreSQL</td>
+<td>Illimité</td>
+<td>UPSERT (pas de doublons)</td>
+</tr>
+<tr>
+<td>Vélib</td>
+<td>DynamoDB</td>
+<td>temps réel</td>
+<td>dernier état seulement</td>
+</tr>
+</tbody>
+</table>
+<hr>
+
+</body>
+</html>
