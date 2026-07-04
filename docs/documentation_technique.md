@@ -46,7 +46,7 @@ NovaSight est une plateforme data end-to-end de type **Smart City** centralisant
 | Bronze S3 | CSV / JSON / GeoJSON brut | Fidélité maximale à la source, zone d'arrivage sans transformation |
 | Bronze Snowflake | Tables typées VARCHAR / VARIANT | Requêtable en SQL dès l'ingestion, flexible pour sources hétérogènes |
 | Silver Snowflake | Tables columnar Snowflake, normalisées et typées | Moteur OLAP, performance analytique, jointures géospatiales (ST_CONTAINS) |
-| Gold S3 | **Parquet (snappy)** | Compression 4-8× vs CSV, lecture columnar, support natif Snowflake et PyArrow |
+| Gold S3 | Parquet (snappy) | Compression vs CSV, lecture columnar, support natif Snowflake et PyArrow |
 | Gold RDS | PostgreSQL tables indexées | Moteur OLTP, latence < 10 ms pour l'API REST, UPSERT natif (ON CONFLICT) |
 | Vélib temps réel | DynamoDB items | Faible latence lecture (<5 ms), pas de schéma fixe |
 
@@ -57,11 +57,8 @@ NovaSight est une plateforme data end-to-end de type **Smart City** centralisant
 | Compression | Excellente | Excellente | Excellente | 
 | Support Snowflake `COPY INTO` | **Natif** | Non | Non | 
 | Lecture  | Via PyArrow | Via `deltalake` lib | Via `pyiceberg` | 
-| Évolution de schéma | Manuelle | **Automatique** | **Automatique** |
 | Complexité opérationnelle | **Faible** | Moyenne | Moyenne | 
 | **Décision** | **Retenu** | Non Retenu  | Non Retenu | 
-
-> **Décision retenue : Parquet.** Natif dans Snowflake (`COPY INTO ... FILE_FORMAT = (TYPE = 'PARQUET') HEADER = TRUE`) et PyArrow, sans dépendance supplémentaire. 
 
 ---
 
@@ -218,14 +215,18 @@ Data_Enginnering_cloud/
 **Partitionnement Bronze S3 :**
 ```
 s3://s3-projet-efrei/bronze/
-├── air_quality/2026/06/08/air_quality_20260608.csv
-├── trafic_velo/2026/06/08/velo_20260608.json
-└── trafic_routier/2026/06/08/trafic_20260608.json
+├── air_quality/2026/05/31/FR_E2_2026-05-31.csv
+├── stations/2026/06/08/stations_2026-06-08.json
+├── velo_counts/2026/06/08/velo_20260608.json
+├── zones_administratives/arrondissements.geojson
+└── trafic_counts/2026/06/08/comptage_trafic_2026-06-08.json
 ```
 
 **Politique de rétention Bronze :**
-- S3 Lifecycle Rule : déplacement vers S3 Glacier Instant Retrieval après **30 jours**
-- Suppression automatique après **90 jours**
+- S3 Lifecycle Rule : déplacement vers S3 Glacier Instant Retrieval après **90 jours**
+
+![cycle de vie s3](../images/cycle_vie_s3.png)
+
 
 **Stratégie d'ingestion :**
 
@@ -290,43 +291,11 @@ tests:
 **Principe :** Une Stored Procedure Snowpark Python calcule les 7 datamarts Gold depuis les tables Silver, gère le delta via watermark, et exporte en Parquet vers S3.
 
 **Stored Procedure `SP_EXPORT_GOLD_TO_S3` :**
-
-```python
-# Fichier : Snowflake/DDL/R__5.0.0_create_export_gold_to_s3.sql
-STAGE = '@SILVER.TRANSFORMATION.stage_gold_export'
-
-def run(session):
-    run_date = date.today().strftime("%Y%m%d")
-
-    # Pour chaque dataset (7 au total) :
-    wm = _get_wm(session, 'dm_air_quality_daily')           # Lecture watermark
-    df = session.table('SILVER.AIR_QUALITY.INT_AIR_QUALITY_IDF') \
-        .filter(F.col('date_mesure') > F.lit(wm))           # Delta uniquement
-        .group_by(...).agg(...)                              # Agrégation Gold
-        .with_column('updated_at', F.current_timestamp())
-
-    if df.count() > 0:
-        _export(df, 'dm_air_quality_daily', run_date)        # Export Parquet S3
-        _set_wm(session, 'dm_air_quality_daily', max_date)   # Mise à jour watermark
-
-def _export(df, dataset, run_date):
-    df.write.copy_into_location(
-        f"{STAGE}/{dataset}/{run_date}.parquet",
-        file_format_type="parquet",
-        header=True,        # Préserve les noms de colonnes dans le schéma Parquet
-        overwrite=True,
-        single=True,
-    )
-```
+![SP_GOLD](../images/sp.png)
 
 **Table de watermark `GOLD_WATERMARK` :**
 
-```sql
-CREATE TABLE IF NOT EXISTS SILVER.TRANSFORMATION.GOLD_WATERMARK (
-    dataset   VARCHAR(100) NOT NULL PRIMARY KEY,
-    last_date DATE         NOT NULL DEFAULT '1970-01-01'::DATE
-);
-```
+![watermark gold](../images/watermark.png)
 
 | Run | Comportement |
 |---|---|
@@ -355,11 +324,11 @@ s3://s3-projet-efrei/gold_export/
 **Principe :** Le flux Vélib temps réel est simulé dans le cadre de notre projet data engineering cloud via un producer en utilisant l'api velib. Il utilise un pipeline séparé basé sur Kafka, indépendant du pipeline batch quotidien. Dans un context réel se sont des capteurs IOT qui envoient des données en temps réel mais nous ne pouvons pas reproduire cela.
 
 ```
-API Vélib temps réel (JCDecaux)
+API Vélib temps réel 
     -> EC2 Kafka Producer (producer_velib.py)
     -> Apache Kafka (EC2 t3.micro, eu-west-1)
     -> EC2 Kafka Consumer (consumer_velib.py)
-    -> DynamoDB (table stations_velib, TTL 24h)
+    -> DynamoDB (table stations_velib)
     -> API Gateway -> Lambda FastAPI -> Streamlit
 ```
 
@@ -406,8 +375,8 @@ S3 PUT gold_export/dm_air_quality_daily/20260701.parquet
 
 ```
 1. Infrastructure Snowflake (Terraform : warehouses, rôles, stages)
-2. DDL Snowflake (Flyway : schémas, tables, Snowpipe, Tasks, SP Snowpark)
-3. Infrastructure AWS (CloudFormation : S3, RDS, Lambda, EC2, DynamoDB, Cognito, API Gateway)
+2. DDL Snowflake (schémas, tables, Snowpipe, Tasks, SP Snowpark)
+3. Infrastructure AWS (CloudFormation : S3, RDS, Lambda, EC2, DynamoDB, Cognito, API Gateway, SNS, KMS)
 4. dbt (modèles Silver : staging + intermediate + zones)
 5. DDL Gold PostgreSQL (V1__create_gold_tables.sql sur RDS)
 6. Lambda API FastAPI (packaging + deploy)
@@ -471,16 +440,8 @@ python run_gold_ddl.py
 
 1. Connecter le repository GitHub à [share.streamlit.io](https://share.streamlit.io)
 2. Sélectionner `Data_Enginnering_cloud/streamlit_app/app.py`
-3. Configurer les secrets dans l'interface Streamlit Cloud :
-
-```toml
-# .streamlit/secrets.toml (Streamlit Cloud UI)
-API_BASE_URL        = "https://xxxxx.execute-api.eu-west-1.amazonaws.com/prod"
-COGNITO_USER_POOL_ID = "eu-west-1_xxxxx"
-COGNITO_CLIENT_ID   = "xxxxx"
-AWS_REGION          = "eu-west-1"
-```
----
+3. Configurer les secrets dans l'interface Streamlit Cloud
+4. Deployer
 
 ## 5. Orchestration
 
@@ -497,10 +458,9 @@ L'orchestration batch est assurée par **Step Function et Snowflake Tasks** cha�
 
 | Composant | Comportement en cas d'erreur |
 |---|---|
-| Snowflake Task | Retry automatique configurable |
+| Snowflake Task | Retry automatique configurable mais pas fait |
 | `SP_EXPORT_GOLD_TO_S3` | Watermark non mis à jour si échec donc données réexportées au run suivant |
-| Lambda RDS Import | Retry dès dépot de fichier |
-| dbt CI/CD | Bloque si un test échoue |
+| Lambda RDS Import | Retry dès dépot des fichiers |
 
 ### 5.3 Scheduling complet
 
@@ -516,28 +476,45 @@ L'orchestration batch est assurée par **Step Function et Snowflake Tasks** cha�
 
 ## 6. Monitoring & Alerting
 
-### 6.1 CloudWatch  Alarmes Lambda
+### 6.1 Architecture SNS Alerting
 
-Chaque Lambda dispose d'alarmes CloudWatch connectées à un topic SNS `novasight-alerts` (email équipe).
+Toutes les alertes convergent vers **un seul topic SNS** `novasight-alerts` qui envoie un email à l'équipe. Trois sources distinctes y publient :
+
+```
+Step Functions
+Lambda RDS Import 
+Snowflake Task FAILED 
+```
+
+| Ressource | Type | Actions |
+|---|---|---|
+| `SNS Subscription` | Email | Envoi immédiat |
+
+![Capture Notification](../images/sns_notif.png)
 
 
 ### 6.2 Monitoring Snowflake (SQL)
 
-Des requêtes pour suivre les logs et à consulter dans Snowsight(Interface snowflake)
+Des requêtes pour suivre les logs et à consulter dans Snowsight (Interface Snowflake) :
 
-![Capture Log task sur Snowight](../images/log_snow.png)
+![Capture Log task sur Snowsight](../images/log_snow.png)
+
+### 6.3 Snowflake Notification Integration
+
+Les tasks Snowflake (`TASK_RUN_DBT_ALL` -> `TASK_EXPORT_GOLD_TO_S3`) publient sur le même topic SNS en cas d'échec via une **Notification Integration** 
 
 
-### 6.3 SLA et alerting
+### 6.4 SLA et alerting
 
-| Canal | Déclencheur |
+| Canal | Déclencheur | 
 |---|---|
-| Email via SNS | Erreur Lambda (extraction, rds-import), CPU RDS > 80%, stockage RDS < 2 GB |
-| Snowflake Notification | Task FAILED ou SKIPPED (`ERROR_INTEGRATION`) |
+| Email via SNS (EventBridge) | Step Functions FAILED / TIMED_OUT / ABORTED | 
+| Email via SNS (CloudWatch) | Lambda RDS Import erreur  | 
+| Email via SNS (SF Notification) | Task Snowflake FAILED | 
 
 **SLA cibles :**
 - Pipeline complet opérationnel
-- Disponibilité dashboard Streamlit Cloud : 99.9% 
+- Disponibilité dashboard Streamlit Cloud : 99,9 %
 - Fraîcheur données : mise à jour avant 09h00 UTC
 
 ---
@@ -562,34 +539,34 @@ Des requêtes pour suivre les logs et à consulter dans Snowsight(Interface snow
 ## 8. Analyse FinOps
 
 > **Périmètre tarifaire :**
-> - **AWS** : région `eu-west-3` (Paris) — tarifs on-demand officiels AWS Paris.
+> - **AWS** : région `eu-west-3` (Paris)  tarifs on-demand officiels AWS Paris.
 > - **Snowflake** : édition **Business Critical** sur AWS EU. 
 > - **Hypothèses snowflake** : 1 pipeline batch/jour, 30 jours/mois, Warehouse XS actif ~5 min/jour donc 150min/mois 
 
 ### 8.1 Phase développement & recette
 
-#### Snowflake — $35 consommés / $400 crédits trial
+#### Snowflake  $35 consommés / $400 crédits trial
 
 | Service | Usage dev | Coût dev |
 |---|---|---|
 | Snowflake Trial (Business Critical, WH XS) | 30 jours | **$35** sur $400 crédits offerts |
 
-#### AWS — $7 consommés / $200 crédits trial
+#### AWS  $7 consommés / $200 crédits trial
 | Service | Usage dev | Coût dev |
 |---|---|---|
 | AWS Trial  | 6 mois | **$7** sur $200 crédits offerts |
 
-### 8.2 Exploitation quotidienne — Business Critical · AWS Paris (eu-west-3)
+### 8.2 Exploitation quotidienne  Business Critical · AWS Paris (eu-west-3)
 
 | Service | Usage mensuel | Calcul détaillé | Coût/mois |
 |---|---|---|---|
-| **Snowflake — Compute WH XS** | 2,5 crédits | 5 min/j × 30 j = 2,5 crédits × $5,20/crédit | **$13,00** |
-| **Snowflake — Snowpipe serverless** | 0,00411 crédit serverless | 0,00411 × $5,20 | **$0,02** |
-| **Snowflake — Stockage** | 20 GB compressés | 0,02 TB × $24/TB/mois | **$0,48** |
+| **Snowflake  Compute WH XS** | 2,5 crédits | 5 min/j × 30 j = 2,5 crédits × $5,20/crédit | **$13,00** |
+| **Snowflake  Snowpipe serverless** | 0,00411 crédit serverless | 0,00411 × $5,20 | **$0,02** |
+| **Snowflake  Stockage** | 100 MO compressés | 0,0001 TB × 24 $/TB/mois | **$0,0024** |
 | **Amazon RDS db.t3.micro** || | **$36,24** |
 | **EC2 t3.micro** (Kafka) | || **$16,992** |
 | **Amazon S3** | ~2 GB | $0,024/GB × 2 GB Standard  | **$0,048** |
-| **AWS Lambda** (3 fonctions) | 15000 invocations/mois | < 1 M req + < 400 000 GB-s → **free tier permanent** | **$0,0130386** |
+| **AWS Lambda** (3 fonctions) | 15000 invocations/mois | < 1 M req + < 400 000 GB-s -> **free tier permanent** | **$0,0130386** |
 | **Amazon API Gateway** (REST) | 15000 requêtes | Premier palier 300M : $1,17/M   | **$1,17** |
 | **Amazon DynamoDB** (on-demand) | |  | **$48,66** |
 | **AWS Step Functions** | ~60 transitions | 4 000 transitions gratuites permanent  | **$0** |
@@ -597,6 +574,7 @@ Des requêtes pour suivre les logs et à consulter dans Snowsight(Interface snow
 | **AWS Secrets Manager** | 1 secret | 1 × $0,40  | **$0,40** |
 | **EventBridge** (S3 events Gold) |  |   | **$0** |
 | **Amazon Cognito** | < 50 000 MAU | Free tier permanent  | **$0** |
+| **Amazon SNS** | < 100 000 MAU | 100000 email = **$2**  | **$0** |
 | | | | |
 | **TOTAL MENSUEL** | | | **~$117** |
 | **TOTAL ANNUEL** | | | **~$1404** |
@@ -606,40 +584,32 @@ Des requêtes pour suivre les logs et à consulter dans Snowsight(Interface snow
 
 | Service | Lien documentation |
 |---|---|
-| Snowflake — Tarifs Business Critical | [snowflake.com/pricing](https://www.snowflake.com/pricing/) |
-| Snowflake — Trial credits | [docs.snowflake.com/user-guide/admin-trial-account](https://docs.snowflake.com/en/user-guide/admin-trial-account) |
-| Snowflake — Coût stockage & compute | [docs.snowflake.com/cost-understanding-overall](https://docs.snowflake.com/en/user-guide/cost-understanding-overall) |
-| Snowflake — Facturation Snowpipe | [docs.snowflake.com/data-load-snowpipe-billing](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-billing) |
-| AWS — Free Tier (tous services) | [aws.amazon.com/free](https://aws.amazon.com/free/) |
-| Amazon S3 — Tarifs eu-west-3 | [aws.amazon.com/s3/pricing](https://aws.amazon.com/s3/pricing/) |
-| AWS Lambda — Tarifs | [aws.amazon.com/lambda/pricing](https://aws.amazon.com/lambda/pricing/) |
-| Amazon RDS PostgreSQL — Tarifs eu-west-3 | [aws.amazon.com/rds/postgresql/pricing](https://aws.amazon.com/rds/postgresql/pricing/) |
-| Amazon DynamoDB — Tarifs eu-west-3 | [aws.amazon.com/dynamodb/pricing](https://aws.amazon.com/dynamodb/pricing/) |
-| Amazon API Gateway — Tarifs eu-west-3 | [aws.amazon.com/api-gateway/pricing](https://aws.amazon.com/api-gateway/pricing/) |
-| Amazon EC2 — Tarifs on-demand eu-west-3 | [aws.amazon.com/ec2/pricing/on-demand](https://aws.amazon.com/ec2/pricing/on-demand/) |
-| AWS Step Functions — Tarifs | [aws.amazon.com/step-functions/pricing](https://aws.amazon.com/step-functions/pricing/) |
-| Amazon CloudWatch — Tarifs | [aws.amazon.com/cloudwatch/pricing](https://aws.amazon.com/cloudwatch/pricing/) |
-| AWS KMS — Tarifs | [aws.amazon.com/kms/pricing](https://aws.amazon.com/kms/pricing/) |
-| AWS Secrets Manager — Tarifs | [aws.amazon.com/secrets-manager/pricing](https://aws.amazon.com/secrets-manager/pricing/) |
-| Amazon EventBridge — Tarifs | [aws.amazon.com/eventbridge/pricing](https://aws.amazon.com/eventbridge/pricing/) |
-| Amazon Cognito — Tarifs | [aws.amazon.com/cognito/pricing](https://aws.amazon.com/cognito/pricing/) |
-
-### 8.4  Orchestration
+| Snowflake  Tarifs Business Critical | [snowflake.com/pricing](https://www.snowflake.com/pricing/) |
+| Snowflake  Trial credits | [docs.snowflake.com/user-guide/admin-trial-account](https://docs.snowflake.com/en/user-guide/admin-trial-account) |
+| Snowflake  Coût stockage & compute | [docs.snowflake.com/cost-understanding-overall](https://docs.snowflake.com/en/user-guide/cost-understanding-overall) |
+| Snowflake  Facturation Snowpipe | [docs.snowflake.com/data-load-snowpipe-billing](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-billing) |
+| AWS  Free Tier (tous services) | [aws.amazon.com/free](https://aws.amazon.com/free/) |
+| Amazon S3  Tarifs eu-west-3 | [aws.amazon.com/s3/pricing](https://aws.amazon.com/s3/pricing/) |
+| AWS Lambda  Tarifs | [aws.amazon.com/lambda/pricing](https://aws.amazon.com/lambda/pricing/) |
+| Amazon RDS PostgreSQL  Tarifs eu-west-3 | [aws.amazon.com/rds/postgresql/pricing](https://aws.amazon.com/rds/postgresql/pricing/) |
+| Amazon DynamoDB  Tarifs eu-west-3 | [aws.amazon.com/dynamodb/pricing](https://aws.amazon.com/dynamodb/pricing/) |
+| Amazon API Gateway  Tarifs eu-west-3 | [aws.amazon.com/api-gateway/pricing](https://aws.amazon.com/api-gateway/pricing/) |
+| Amazon EC2  Tarifs on-demand eu-west-3 | [aws.amazon.com/ec2/pricing/on-demand](https://aws.amazon.com/ec2/pricing/on-demand/) |
+| AWS Step Functions  Tarifs | [aws.amazon.com/step-functions/pricing](https://aws.amazon.com/step-functions/pricing/) |
+| Amazon CloudWatch  Tarifs | [aws.amazon.com/cloudwatch/pricing](https://aws.amazon.com/cloudwatch/pricing/) |
+| AWS KMS  Tarifs | [aws.amazon.com/kms/pricing](https://aws.amazon.com/kms/pricing/) |
+| AWS Secrets Manager  Tarifs | [aws.amazon.com/secrets-manager/pricing](https://aws.amazon.com/secrets-manager/pricing/) |
+| Amazon EventBridge  Tarifs | [aws.amazon.com/eventbridge/pricing](https://aws.amazon.com/eventbridge/pricing/) |
+| Amazon Cognito  Tarifs | [aws.amazon.com/cognito/pricing](https://aws.amazon.com/cognito/pricing/) |
 
 
-> **Décision :** Snowflake Tasks pour le pipeline batch quotidien (coût nul, natif Snowflake). Step Functions pour le flux extraction (gestion d'état, retry, monitoring intégré à CloudWatch).
-
-### 8.5  Serving Layer
-
-> **Décision :** RDS PostgreSQL pour les 7 datamarts Gold (SQL, UPSERT, jointures géospatiales), DynamoDB pour le Vélib temps réel, latence < 5 ms, schéma flexible).
-
-### 8.6 Optimisations FinOps
+### 8.4 Optimisations FinOps
 
 | Optimisation | Économie estimée | Détail |
 |---|---|---|
 | `AUTO_SUSPEND = 60s` Snowflake WH | −40 % compute | `ALTER WAREHOUSE TRANSFORM_WH SET AUTO_SUSPEND = 60` |
 | Parquet snappy vs CSV | −75 % stockage S3 | Natif dans `COPY INTO` Snowflake (`FILE_FORMAT = PARQUET`) |
-| S3 Lifecycle Rules Bronze | −60 % stockage Bronze | Glacier Instant Retrieval après 30 j, delete à 90 j |
+| S3 Lifecycle Rules Bronze | −60 % stockage Bronze | Glacier Instant après 90 j |
 | RDS Reserved Instance 1 an | −20 % vs on-demand | ~$28,99/mois vs $36,24/mois (Paris eu-west-3) |
 | EC2 Reserved Instance 1 an (Kafka) | −19 % vs on-demand | ~$13,76/mois vs $16,992/mois (Paris eu-west-3) |
 | S3 Bucket Key KMS | −99 % appels KMS API | `BucketKeyEnabled: true` 1 clé de données par bucket au lieu de 1 par objet |
@@ -648,34 +618,46 @@ Des requêtes pour suivre les logs et à consulter dans Snowsight(Interface snow
 
 ## 9. Sécurité  Chiffrement KMS & RGPD
 
-### 9.1 Architecture de chiffrement (en place + à implémenter)
+### 9.1 Chiffrement avec clé KMS privée (CMK)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  AWS KMS  3 clés CMK (Customer Managed Keys)          │
-│  ├── novasight-s3-key     -> chiffrement S3 Bronze/Gold  │
-│  ├── novasight-rds-key    -> chiffrement RDS PostgreSQL  │
-│  └── novasight-sm-key     -> chiffrement Secrets Manager │
-└─────────────────────────────────────────────────────────┘
+**Implémenté :**
+- **S3**  SSE-KMS avec CMK `alias/projet-efrei-s3`, `BucketKeyEnabled: true`.
+- **RDS PostgreSQL**  `StorageEncrypted: true` + CMK `alias/projet-efrei-rds` (instance `rds-projet-efrei`).
 
-┌─────────────────────────────────────────────────────────┐
-│  Snowflake  Tri-Secret Secure (Business Critical)       │
-│  Avec notre clé AWS KMS                                 │
-│  Mais cette fonctionnalité  n'a pas pu etre implémentée │
-│  car une utilise le free trial snowflake                │
-└─────────────────────────────────────────────────────────┘
-```
+**Clé AWS managée :**
+- Lambda et Secrets Manager utilisent le chiffrement par défaut AWS (pas de CMK, sans surcoût).
 
-### 9.2 Chiffrement avec clé KMS privée (CMK)
+![chiffrement s3](../images/kms_s3.png)
 
-**Actuellement :**
--  S3, RDS et SSE-KMS avec notre propre CMK (Customer Managed Key).
--  lambda et secret manager sont chiffrés pas une clé KMS gérée par AWS.
+![chiffrement rds](../images/kms_rds.png)
+
+### 9.2 Accès S3
+L'accès public au compartiment et objets est désactivé aux public
+
+![accès s3](../images/s3_public.png)
+
+### 9.3 Rôles et privileges 
+
+#### AWS IAM
+
+Chaque rôle est **scopé au strict nécessaire** : aucun wildcard `*` sur les ressources, chaque action est restreinte au service et au préfixe qu'il manipule réellement.
+
+#### Snowflake
+
+Les rôles Snowflake suivent le même principe : chaque rôle n'accède qu'aux schémas et objets nécessaires à sa fonction.
+
+| Rôle Snowflake | Utilisé par | Périmètre |
+|---|---|---|
+| `TRANSFORM_ROLE` | dbt, Snowpark SP, Tasks | Lecture/écriture sur les schémas Silver et Bronze, exécution des Tasks et Stored Procedures, accès au Warehouse `TRANSFORM_WH` |
+| `GITHUB_ROLE` | GitHub Actions CI/CD uniquement | Déploiement infra et DDL (CREATE/ALTER objets et INTEGRATION), pas d'accès aux données métier |
+| `ANALYST_ROLE` | Data analysts, Snowsight | SELECT uniquement sur Silver, aucun accès Bronze brut, aucune écriture |
+
+> **Principe appliqué :** aucun rôle applicatif ou data n'a de droits `ACCOUNTADMIN` ou `SYSADMIN`. Les opérations d'administration (création d'intégrations, gestion des objets) sont isolées dans `GITHUB_ROLE` pour le CI/CD
 
 ---
 
 
-### 9.6 Cartographie des données  Data Mapping RGPD
+### 9.4 Cartographie des données  Data Mapping RGPD
 
 | Source | Champs | Catégorie RGPD | Niveau de risque | Action |
 |---|---|---|---|---|
@@ -688,7 +670,7 @@ Des requêtes pour suivre les logs et à consulter dans Snowsight(Interface snow
 
 > Les données traitées par le pipeline Bronze -> Gold sont **entièrement publiques et anonymes**. Le seul traitement de données personnelles concerne les comptes utilisateurs du dashboard, gérés exclusivement par **Amazon Cognito**.
 
-### 9.7 Registre de traitement simplifié
+### 9.5 Registre de traitement simplifié
 
 | Traitement | Finalité | Base légale | Données | Rétention |
 |---|---|---|---|---|
@@ -697,13 +679,13 @@ Des requêtes pour suivre les logs et à consulter dans Snowsight(Interface snow
 | Vélib temps réel | Information mobilité | Intérêt légitime | Disponibilité stations publiques | dernier état seulement |
 | Authentification dashboard | Contrôle d'accès | Consentement | Email + mot de passe hashé (Cognito) + token | Durée du projet |
 
-### 9.8 Politique de rétention des données
+### 9.6 Politique de rétention des données
 
 | Couche | Support | Rétention | Mécanisme |
 |---|---|---|---|
-| Bronze | S3 | 90 jours | S3 Lifecycle : Glacier après 30 j, delete après 90 j |
+| Bronze | S3 | 90 jours | S3 Lifecycle : Glacier après 90 j |
 | Silver | Snowflake | Illimité | Conservation analytique |
-| Gold | S3 | 30 jours (delta) |  Lifecycle delete après 30 j |
+| Gold | S3 | 90 jours (delta) |  Lifecycle après 90 j |
 | Gold | RDS PostgreSQL | Illimité | UPSERT (pas de doublons) |
 | Vélib | DynamoDB | temps réel | dernier état seulement |
 ---
