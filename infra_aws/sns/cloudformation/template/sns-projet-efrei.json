@@ -1,13 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "SNS alertes NovaSight — Step Functions FAILED + Lambda Import Errors",
-  "Parameters": {
-    "AlertEmail": {
-      "Type": "String",
-      "Default": "amarhasnaoui2019@gmail.com",
-      "Description": "Adresse email destinataire des alertes"
-    }
-  },
   "Resources": {
 
     "AlertsTopic": {
@@ -23,7 +16,7 @@
       "Properties": {
         "TopicArn": { "Ref": "AlertsTopic" },
         "Protocol": "email",
-        "Endpoint": { "Ref": "AlertEmail" }
+        "Endpoint": "amarhasnaoui2019@gmail.com"
       }
     },
 

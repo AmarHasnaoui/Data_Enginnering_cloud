@@ -35,8 +35,6 @@ jobs:
           aws cloudformation deploy \
             --stack-name projet-efrei-sns \
             --template-file infra_aws/sns/cloudformation/template/sns-projet-efrei.json \
-            --parameter-overrides \
-              AlertEmail=${{ secrets.ALERT_EMAIL }} \
             --no-fail-on-empty-changeset
 
       # --- S3 (après KMS : importe projet-efrei-kms-s3-arn) ---
