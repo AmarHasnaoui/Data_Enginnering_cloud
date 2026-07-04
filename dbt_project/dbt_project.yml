@@ -1,0 +1,40 @@
+name: 'novasight'
+version: '1.0.0'
+config-version: 2
+
+profile: 'novasight'
+
+model-paths:  ["models"]
+test-paths:   ["tests"]
+seed-paths:   ["seeds"]
+
+target-path:  "target"
+clean-targets: ["target", "dbt_packages"]
+
+# dbt gère uniquement Bronze → Silver (staging + intermediate).
+# Les datamarts Gold sont produits par la Stored Procedure Snowpark SP_EXPORT_GOLD_TO_S3.
+
+models:
+  novasight:
+    +database: SILVER
+
+    air_quality:
+      +schema: AIR_QUALITY
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: table
+
+    mobilite:
+      +schema: MOBILITE
+      staging:
+        +materialized: view
+      intermediate:
+        +materialized: table
+
+    zones:
+      +schema: ZONES_ADMINISTRATIVES
+      staging:
+        +materialized: table
+      intermediate:
+        +materialized: table

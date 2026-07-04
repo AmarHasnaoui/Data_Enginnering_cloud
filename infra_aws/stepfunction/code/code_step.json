@@ -1,0 +1,27 @@
+{
+  "Comment": "Pipeline d'extraction air quality : appelle Lambda Extraction → dépôt S3 Bronze. Snowpipe prend le relais automatiquement pour charger BRONZE Snowflake.",
+  "StartAt": "Extraction",
+  "States": {
+    "Extraction": {
+      "Type": "Task",
+      "Resource": "${LambdaExtractionArn}",
+      "ResultPath": "$.extractionResult",
+      "Next": "SuccessState",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.error",
+          "Next": "FailState"
+        }
+      ]
+    },
+    "SuccessState": {
+      "Type": "Succeed"
+    },
+    "FailState": {
+      "Type": "Fail",
+      "Error": "ExtractionFailed",
+      "Cause": "Erreur lors de l'extraction API → S3"
+    }
+  }
+}

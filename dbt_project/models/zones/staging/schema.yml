@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: stg_arrondissements
+    description: "Référentiel des 20 arrondissements parisiens, une ligne par zone, géométrie en GEOGRAPHY Snowflake."
+    columns:
+      - name: arrondissement_code
+        description: "Numéro d'arrondissement (1-20)"
+        tests: [not_null, unique]
+      - name: code_insee
+        description: "Code INSEE (75101-75120)"
+        tests: [not_null, unique]
+      - name: nom_arrondissement
+        description: "Nom officiel de l'arrondissement"
+        tests: [not_null]
+      - name: geometry
+        description: "Polygone GEOGRAPHY de l'arrondissement, utilisé pour les jointures spatiales ST_CONTAINS"
+        tests: [not_null]

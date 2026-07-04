@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: stg_air_quality
+    description: >
+      Cast des types depuis BRONZE.RAW_AIR_QUALITY, dédupliqué par jour
+      (garde uniquement le dernier _loaded_at en cas de ré-exécution de la
+      Lambda d'extraction le même jour).
+    columns:
+      - name: code_site
+        description: Identifiant unique de la station de mesure.
+        tests:
+          - not_null
+      - name: polluant
+        description: Polluant mesuré.
+        tests:
+          - not_null
+      - name: date_debut
+        description: Timestamp de début de la période de mesure (casté en TIMESTAMP_NTZ).
+        tests:
+          - not_null
+      - name: _loaded_at
+        description: Timestamp de chargement Snowpipe utilisé pour la déduplication par jour.
+        tests:
+          - not_null
+
+  - name: stg_coordonnees
+    description: "Référentiel géographique des stations, types castés."
+    columns:
+      - name: code_site
+        description: Identifiant unique de la station (clé primaire du référentiel).
+        tests:
+          - not_null
+          - unique
+      - name: latitude
+        tests:
+          - not_null
+      - name: longitude
+        tests:
+          - not_null

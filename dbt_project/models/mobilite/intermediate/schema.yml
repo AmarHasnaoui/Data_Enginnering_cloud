@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: int_velo_daily
+    description: "Agrégat journalier des passages vélo par compteur."
+    columns:
+      - name: compteur_id
+        tests:
+          - not_null
+      - name: date_jour
+        tests:
+          - not_null
+      - name: total_passages_jour
+        tests:
+          - not_null
+    tests:
+      - unique:
+          column_name: "(compteur_id || '|' || date_jour)"
+
+  - name: int_trafic_daily
+    description: "Agrégat journalier du trafic routier par arc de voirie."
+    columns:
+      - name: arc_id
+        tests:
+          - not_null
+      - name: date_jour
+        tests:
+          - not_null
+      - name: nb_mesures
+        tests:
+          - not_null
+    tests:
+      - unique:
+          column_name: "(arc_id || '|' || date_jour)"

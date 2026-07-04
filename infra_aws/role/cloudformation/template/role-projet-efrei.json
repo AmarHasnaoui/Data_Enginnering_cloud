@@ -1,0 +1,136 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "IAM Role pour le pipeline de données (moindre privilège)",
+  "Parameters": {
+    "SnowflakeAwsUserId": {
+      "Type": "String",
+      "Default": "arn:aws:iam::332896938820:user/2ect1000-s",
+      "Description": "ARN user Snowflake (DESC INTEGRATION s3_integration → STORAGE_AWS_IAM_USER_ARN)"
+    }
+  },
+  "Resources": {
+    "ProjetEfreiPipelineRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "projet-efrei-role",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com",
+                  "states.amazonaws.com"
+                ]
+              },
+              "Action": "sts:AssumeRole"
+            },
+            {
+              "Effect": "Allow",
+              "Principal": { "AWS": { "Ref": "SnowflakeAwsUserId" } },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": "RV18665_SFCRole=128_izEGKH89DgerzzYsZkpISvNZA+4="
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "ProjetEfreiPipelinePolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "S3BucketList",
+                  "Effect": "Allow",
+                  "Action": ["s3:ListBucket", "s3:GetBucketLocation"],
+                  "Resource": "arn:aws:s3:::s3-projet-efrei"
+                },
+                {
+                  "Sid": "S3ObjectAccess",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+                  "Resource": "arn:aws:s3:::s3-projet-efrei/*"
+                },
+                {
+                  "Sid": "LambdaInvoke",
+                  "Effect": "Allow",
+                  "Action": ["lambda:InvokeFunction"],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:lambda:eu-west-3:${AWS::AccountId}:function:projet-efrei-*"
+                  }
+                },
+                {
+                  "Sid": "StepFunctionInvoke",
+                  "Effect": "Allow",
+                  "Action": [
+                    "states:StartExecution",
+                    "states:DescribeExecution",
+                    "states:GetExecutionHistory"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:states:eu-west-3:${AWS::AccountId}:stateMachine:projet-efrei-*"
+                  }
+                },
+                {
+                  "Sid": "SecretsManagerAccess",
+                  "Effect": "Allow",
+                  "Action": ["secretsmanager:GetSecretValue"],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:secretsmanager:eu-west-3:${AWS::AccountId}:secret:projet-efrei/*"
+                  }
+                },
+                {
+                  "Sid": "DynamoDBVelibRead",
+                  "Effect": "Allow",
+                  "Action": ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:dynamodb:eu-west-3:${AWS::AccountId}:table/velib_realtime"
+                  }
+                },
+                {
+                  "Action": "sns:Publish",
+                  "Resource": { "Fn::ImportValue": "projet-efrei-sns-alerts-arn" },
+                  "Sid": "Sns",
+                  "Effect": "Allow"
+                },
+                {
+                  "Sid": "CloudWatchLogs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:logs:eu-west-3:${AWS::AccountId}:log-group:/aws/lambda/projet-efrei-*:*"
+                  }
+                },
+                {
+                  "Sid": "KMSAccessS3",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:GenerateDataKey",
+                    "kms:Decrypt",
+                    "kms:DescribeKey"
+                  ],
+                  "Resource": { "Fn::ImportValue": "projet-efrei-kms-s3-arn" }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "RoleArn": {
+      "Value": { "Fn::GetAtt": ["ProjetEfreiPipelineRole", "Arn"] },
+      "Export": { "Name": "projet-efrei-role-arn" }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+novasight:
+  target: prod
+  outputs:
+
+    prod:
+      type: snowflake
+      role: TRANSFORM_ROLE
+      database: SILVER
+      schema: TRANSFORMATION
+      warehouse: TRANSFORM_WH
+      threads: 4
+      client_session_keep_alive: false
+
+    dev:
+      type: snowflake
+      role: DATA_ENGINEER
+      database: SILVER
+      schema: TRANSFORMATION
+      warehouse: QUERY_WH
+      threads: 2
+      client_session_keep_alive: false

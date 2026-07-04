@@ -1,0 +1,18 @@
+USE DATABASE SILVER;
+CREATE SCHEMA IF NOT EXISTS TRANSFORMATION;
+USE SCHEMA TRANSFORMATION;
+
+-- Task quotidienne : build complet du projet dbt à 08h00 (après le dépôt S3 J-1)
+-- Le projet est déployé dans SILVER.TRANSFORMATION via Snow CLI
+-- Les modèles s'écrivent dans SILVER.AIR_QUALITY, SILVER.MOBILITE, SILVER.SMARTCITY
+
+USE ROLE TRANSFORM_ROLE;
+
+CREATE OR REPLACE TASK TASK_RUN_DBT_ALL
+  WAREHOUSE = TRANSFORM_WH
+  SCHEDULE  = 'USING CRON 0 8 * * * Europe/Paris'
+AS
+  execute dbt project "SILVER"."TRANSFORMATION"."NOVASIGHT" args='build --target prod';
+
+USE ROLE GITHUB_ROLE;
+

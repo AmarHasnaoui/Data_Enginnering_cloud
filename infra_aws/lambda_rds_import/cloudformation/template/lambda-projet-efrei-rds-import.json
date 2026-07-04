@@ -1,0 +1,127 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Lambda-trigger : S3 EventBridge -> PyArrow UPSERT RDS Postgres",
+  "Parameters": {
+    "RDSPassword": {
+      "Type": "String",
+      "NoEcho": true,
+      "Description": "Mot de passe RDS (secret RDS_PASSWORD)"
+    }
+  },
+  "Resources": {
+    "LambdaRdsImportRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "lambda-rds-import-role",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": "lambda.amazonaws.com" },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "lambda-rds-import-logs",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "CloudWatchLogs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:logs:eu-west-3:${AWS::AccountId}:log-group:/aws/lambda/lambda-projet-efrei-rds-import:*"
+                  }
+                },
+                {
+                  "Sid": "S3ReadGoldExport",
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject"],
+                  "Resource": "arn:aws:s3:::s3-projet-efrei/gold_export/*"
+                },
+                {
+                  "Sid": "KMSDecryptS3",
+                  "Effect": "Allow",
+                  "Action": ["kms:Decrypt", "kms:DescribeKey"],
+                  "Resource": { "Fn::ImportValue": "projet-efrei-kms-s3-arn" }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "LambdaRdsImport": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "lambda-projet-efrei-rds-import",
+        "Runtime": "python3.12",
+        "Handler": "lambda_function.lambda_handler",
+        "Role": { "Fn::GetAtt": ["LambdaRdsImportRole", "Arn"] },
+        "Code": {
+          "S3Bucket": "s3-projet-efrei",
+          "S3Key": "lambda/rds_import.zip"
+        },
+        "Timeout": 120,
+        "MemorySize": 512,
+        "Environment": {
+          "Variables": {
+            "RDS_HOST":     { "Fn::ImportValue": "projet-efrei-rds-endpoint" },
+            "RDS_PORT":     { "Fn::ImportValue": "projet-efrei-rds-port" },
+            "RDS_DATABASE": "novasight",
+            "RDS_USER":     "novasight_admin",
+            "RDS_PASSWORD": { "Ref": "RDSPassword" }
+          }
+        },
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Layer",   "Value": "Gold" }
+        ]
+      }
+    },
+    "GoldExportEventRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Name": "novasight-gold-export-s3-created",
+        "Description": "Déclenche l'import RDS dès qu'un fichier gold_export/*.csv est (ré)écrit sur S3",
+        "EventPattern": {
+          "source": ["aws.s3"],
+          "detail-type": ["Object Created"],
+          "detail": {
+            "bucket": { "name": ["s3-projet-efrei"] },
+            "object": { "key": [{ "prefix": "gold_export/" }] }
+          }
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Id": "LambdaRdsImportTarget",
+            "Arn": { "Fn::GetAtt": ["LambdaRdsImport", "Arn"] }
+          }
+        ]
+      }
+    },
+    "LambdaPermissionEventBridge": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Fn::GetAtt": ["LambdaRdsImport", "Arn"] },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["GoldExportEventRule", "Arn"] }
+      }
+    }
+  },
+  "Outputs": {
+    "LambdaRdsImportArn": {
+      "Value": { "Fn::GetAtt": ["LambdaRdsImport", "Arn"] }
+    }
+  }
+}

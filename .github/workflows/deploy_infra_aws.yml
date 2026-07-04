@@ -1,0 +1,155 @@
+name: Deploy infra AWS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+
+      # --- KMS (à déployer en 1er : S3, IAM et RDS en importent les ARNs) ---
+      - name: Deploy KMS stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-kms \
+            --template-file infra_aws/kms/cloudformation/template/kms-projet-efrei.json \
+            --no-fail-on-empty-changeset
+
+      # --- SNS Alertes (après KMS, indépendant des autres stacks) ---
+      - name: Deploy SNS stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-sns \
+            --template-file infra_aws/sns/cloudformation/template/sns-projet-efrei.json \
+            --no-fail-on-empty-changeset
+
+      # --- S3 (après KMS : importe projet-efrei-kms-s3-arn) ---
+      # SQS ARNs vides au 1er run → pas de notifications (condition HasSnowpipeNotifications=false)
+      # Après création des Snowpipes, ajouter les secrets SNOWPIPE_*_SQS_ARN et relancer
+      - name: Deploy S3 stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-s3 \
+            --template-file infra_aws/s3/cloudformation/template/s3-projet-efrei.json \
+            --parameter-overrides \
+              SnowpipeAirQualitySQSArn=${{ secrets.SNOWPIPE_AIR_QUALITY_SQS_ARN }} \
+              SnowpipeCoordonneesSQSArn=${{ secrets.SNOWPIPE_COORDONNEES_SQS_ARN }} \
+              SnowpipeTraficVeloSQSArn=${{ secrets.SNOWPIPE_TRAFIC_VELO_SQS_ARN }} \
+              SnowpipeTraficRoutierSQSArn=${{ secrets.SNOWPIPE_TRAFIC_ROUTIER_SQS_ARN }} \
+              SnowpipeVelibRealtimeSQSArn=${{ secrets.SNOWPIPE_VELIB_REALTIME_SQS_ARN }} \
+              SnowpipeStationsVelibSQSArn=${{ secrets.SNOWPIPE_STATIONS_VELIB_SQS_ARN }} \
+            --no-fail-on-empty-changeset
+
+      # --- IAM Role ---
+      - name: Deploy IAM stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-iam \
+            --template-file infra_aws/role/cloudformation/template/role-projet-efrei.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              SnowflakeAwsUserId=${{ secrets.SNOWFLAKE_AWS_USER_ID }} \
+            --no-fail-on-empty-changeset
+
+      # --- Lambda Extraction ---
+      - name: Zip Lambda extraction
+        run: |
+          cd infra_aws/lambda_extraction/code
+          pip install requests -t .
+          zip -r ../../../extraction.zip .
+
+      - name: Upload extraction zip to S3
+        run: aws s3 cp extraction.zip s3://s3-projet-efrei/lambda/extraction.zip
+
+      - name: Deploy Lambda extraction stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-extraction \
+            --template-file infra_aws/lambda_extraction/cloudformation/template/lambda-projet-efrei-extraction.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      # --- DynamoDB Vélib realtime ---
+      - name: Deploy DynamoDB stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-dynamo \
+            --template-file infra_aws/dynamo/cloudformation/template/dynamo-projet-efrei.json \
+            --no-fail-on-empty-changeset
+
+      # --- EC2 Kafka (producer Vélib → consumer DynamoDB) ---
+      - name: Upload scripts Kafka vers S3
+        run: |
+          aws s3 cp infra_aws/ec2/code/producer_velib.py s3://s3-projet-efrei/ec2/producer_velib.py
+          aws s3 cp infra_aws/ec2/code/consumer_velib.py s3://s3-projet-efrei/ec2/consumer_velib.py
+          aws s3 cp infra_aws/ec2/code/setup.sh          s3://s3-projet-efrei/ec2/setup.sh
+
+      - name: Deploy EC2 Kafka stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-kafka \
+            --template-file infra_aws/ec2/cloudformation/template/ec2-projet-efrei-kafka.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              KeyName=${{ secrets.EC2_KEY_NAME }} \
+            --no-fail-on-empty-changeset
+
+      # --- Step Function ---
+      - name: Upload Step Function definition to S3
+        run: aws s3 cp infra_aws/stepfunction/code/code_step.json s3://s3-projet-efrei/stepfunction/code_step.json
+
+      - name: Deploy Step Function stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-stepfunction \
+            --template-file infra_aws/stepfunction/cloudformation/template/projet-efrei-step.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      # --- RDS Gold (Postgres) ---
+      - name: Deploy RDS stack
+        run: |
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters Name=isDefault,Values=true \
+            --query 'Vpcs[0].VpcId' --output text)
+          SUBNET_IDS=$(aws ec2 describe-subnets \
+            --filters Name=vpc-id,Values=$VPC_ID \
+            --query 'Subnets[*].SubnetId' --output text | tr '\t' ',')
+          aws cloudformation deploy \
+            --stack-name projet-efrei-rds \
+            --template-file infra_aws/rds/cloudformation/template/rds-projet-efrei.json \
+            --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+              DBPassword=${{ secrets.RDS_PASSWORD }} \
+              VpcId=$VPC_ID \
+              SubnetIds=$SUBNET_IDS \
+            --no-fail-on-empty-changeset
+
+      # --- Lambda trigger RDS import (S3 gold_export/**/*.parquet > EventBridge > PyArrow UPSERT RDS) ---
+      - name: Zip Lambda RDS import
+        run: |
+          cd infra_aws/lambda_rds_import/code
+          pip install -r requirements.txt -t .
+          zip -r ../../../rds_import.zip .
+
+      - name: Upload RDS import zip to S3
+        run: aws s3 cp rds_import.zip s3://s3-projet-efrei/lambda/rds_import.zip
+
+      - name: Deploy Lambda RDS import stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-rds-import \
+            --template-file infra_aws/lambda_rds_import/cloudformation/template/lambda-projet-efrei-rds-import.json \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              RDSPassword=${{ secrets.RDS_PASSWORD }} \
+            --no-fail-on-empty-changeset

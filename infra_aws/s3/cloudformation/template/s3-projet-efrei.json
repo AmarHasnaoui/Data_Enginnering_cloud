@@ -1,0 +1,154 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Bucket S3 Data Lake Bronze ingestion vers Snowflake via Snowpipe",
+  "Parameters": {
+    "SnowpipeAirQualitySQSArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "SQS ARN Snowpipe PIPE_AIR_QUALITY (bronze/air_quality/)"
+    },
+    "SnowpipeCoordonneesSQSArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "SQS ARN Snowpipe PIPE_COORDONNEES (bronze/coordonnees/)"
+    },
+    "SnowpipeTraficVeloSQSArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "SQS ARN Snowpipe PIPE_TRAFIC_VELO (bronze/velo_counts/)"
+    },
+    "SnowpipeTraficRoutierSQSArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "SQS ARN Snowpipe PIPE_TRAFIC_ROUTIER (bronze/traffic_counts/)"
+    },
+    "SnowpipeVelibRealtimeSQSArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "SQS ARN Snowpipe PIPE_VELIB_REALTIME (bronze/velib_realtime/)"
+    },
+    "SnowpipeStationsVelibSQSArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "SQS ARN Snowpipe PIPE_STATIONS_VELIB (bronze/stations/)"
+    }
+  },
+  "Conditions": {
+    "HasSnowpipeNotifications": {
+      "Fn::Not": [{ "Fn::Equals": [{ "Ref": "SnowpipeAirQualitySQSArn" }, ""] }]
+    }
+  },
+  "Resources": {
+    "DataLakeBronzeBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "s3-projet-efrei",
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "BucketKeyEnabled": true,
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "aws:kms",
+                "KMSMasterKeyID": { "Fn::ImportValue": "projet-efrei-kms-s3-arn" }
+              }
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "ArchiveBronzeAfter90Days",
+              "Status": "Enabled",
+              "Transitions": [
+                {
+                  "TransitionInDays": 90,
+                  "StorageClass": "GLACIER"
+                }
+              ]
+            }
+          ]
+        },
+        "NotificationConfiguration": {
+          "EventBridgeConfiguration": { "EventBridgeEnabled": true },
+          "QueueConfigurations": {
+            "Fn::If": [
+              "HasSnowpipeNotifications",
+              [
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [{ "Name": "prefix", "Value": "bronze/air_quality/" }]
+                    }
+                  },
+                  "Queue": { "Ref": "SnowpipeAirQualitySQSArn" }
+                },
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [{ "Name": "prefix", "Value": "bronze/coordonnees/" }]
+                    }
+                  },
+                  "Queue": { "Ref": "SnowpipeCoordonneesSQSArn" }
+                },
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [{ "Name": "prefix", "Value": "bronze/velo_counts/" }]
+                    }
+                  },
+                  "Queue": { "Ref": "SnowpipeTraficVeloSQSArn" }
+                },
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [{ "Name": "prefix", "Value": "bronze/traffic_counts/" }]
+                    }
+                  },
+                  "Queue": { "Ref": "SnowpipeTraficRoutierSQSArn" }
+                },
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Filter": {
+                    "S3Key": {
+                      "Rules": [{ "Name": "prefix", "Value": "bronze/stations/" }]
+                    }
+                  },
+                  "Queue": { "Ref": "SnowpipeStationsVelibSQSArn" }
+                }
+              ],
+              { "Ref": "AWS::NoValue" }
+            ]
+          }
+        },
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Layer", "Value": "Bronze" },
+          { "Key": "Environment", "Value": "Dev" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "BucketName": {
+      "Value": { "Ref": "DataLakeBronzeBucket" },
+      "Export": { "Name": "projet-efrei-s3-bucket-name" }
+    },
+    "BucketArn": {
+      "Value": { "Fn::GetAtt": ["DataLakeBronzeBucket", "Arn"] },
+      "Export": { "Name": "projet-efrei-s3-bucket-arn" }
+    }
+  }
+}

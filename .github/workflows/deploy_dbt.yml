@@ -1,0 +1,43 @@
+name: Deploy dbt to Snowflake
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Snowflake CLI
+        run: pip install snowflake-cli
+
+      - name: Configure Snow CLI connection
+        env:
+          SNOWFLAKE_ORG:                ${{ secrets.SNOWFLAKE_ORG }}
+          SNOWFLAKE_ACCOUNT:            ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          TRANSFORM_USER_PASSWORD: ${{ secrets.TRANSFORM_USER_PASSWORD }}
+        run: |
+          mkdir -p ~/.snowflake
+          python - << 'PYEOF'
+          import os, pathlib
+          cfg = (
+              "[connections.novasight]\n"
+              f'account   = "{os.environ["SNOWFLAKE_ORG"]}-{os.environ["SNOWFLAKE_ACCOUNT"]}"\n'
+              'user      = "TRANSFORM_USER"\n'
+              f'password  = "{os.environ["TRANSFORM_USER_PASSWORD"]}"\n'
+              'role      = "TRANSFORM_ROLE"\n'
+              'database  = "SILVER"\n'
+              'schema    = "TRANSFORMATION"\n'
+              'warehouse = "TRANSFORM_WH"\n'
+          )
+          p = pathlib.Path.home() / ".snowflake" / "config.toml"
+          p.write_text(cfg)
+          p.chmod(0o600)
+          PYEOF
+
+      - name: Deploy dbt project to Snowflake
+        working-directory: dbt_project
+        run: snow dbt deploy novasight --profiles-dir . --connection novasight

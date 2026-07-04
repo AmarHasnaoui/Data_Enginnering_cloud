@@ -1,0 +1,90 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "EC2 t3.small Kafka producer Velib API consumer DynamoDB",
+  "Parameters": {
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Default": "kafkaKey",
+      "Description": "Clé SSH pour accès EC2"
+    },
+    "ImageId": {
+      "Type": "String",
+      "Default": "ami-0ef9bcd5dfb57b968",
+      "Description": "AMI Ubuntu 22.04 LTS eu-west-3"
+    }
+  },
+  "Resources": {
+    "EC2Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "ec2-kafka-role",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": "ec2.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "Policies": [{
+          "PolicyName": "ec2-kafka-policy",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": ["s3:GetObject"],
+                "Resource": "arn:aws:s3:::s3-projet-efrei/ec2/*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": ["dynamodb:PutItem", "dynamodb:UpdateItem"],
+                "Resource": { "Fn::Sub": "arn:aws:dynamodb:eu-west-3:${AWS::AccountId}:table/velib_realtime" }
+              }
+            ]
+          }
+        }]
+      }
+    },
+    "EC2InstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "InstanceProfileName": "ec2-kafka-profile",
+        "Roles": [{ "Ref": "EC2Role" }]
+      }
+    },
+    "KafkaSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "SSH only Kafka stays internal to the EC2",
+        "SecurityGroupIngress": [
+          { "IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "CidrIp": "0.0.0.0/0" }
+        ]
+      }
+    },
+    "KafkaEC2": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType": "t3.small",
+        "KeyName": { "Ref": "KeyName" },
+        "ImageId": { "Ref": "ImageId" },
+        "IamInstanceProfile": { "Ref": "EC2InstanceProfile" },
+        "SecurityGroupIds": [{ "Ref": "KafkaSecurityGroup" }],
+        "BlockDeviceMappings": [{
+          "DeviceName": "/dev/xvda",
+          "Ebs": { "VolumeSize": 8, "VolumeType": "gp3", "DeleteOnTermination": true }
+        }],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Sub": "#!/bin/bash\napt-get update -y\napt-get install -y unzip curl\ncurl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip\nunzip -q /tmp/awscliv2.zip -d /tmp\n/tmp/aws/install\nexport S3_BUCKET=s3-projet-efrei\nexport DYNAMO_TABLE=velib_realtime\naws s3 cp s3://s3-projet-efrei/ec2/setup.sh /tmp/setup.sh\nchmod +x /tmp/setup.sh\nbash /tmp/setup.sh > /tmp/setup.log 2>&1\n"
+          }
+        },
+        "Tags": [{ "Key": "Name", "Value": "novasight-kafka-ec2" }]
+      }
+    }
+  },
+  "Outputs": {
+    "InstanceId": { "Value": { "Ref": "KafkaEC2" } },
+    "PublicIP":   { "Value": { "Fn::GetAtt": ["KafkaEC2", "PublicIp"] } }
+  }
+}

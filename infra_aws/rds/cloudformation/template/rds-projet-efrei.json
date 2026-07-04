@@ -1,0 +1,127 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "RDS Postgres Gold, import natif depuis S3 via extension aws_s3 (rôle s3Import)",
+  "Parameters": {
+    "DBPassword": {
+      "Type": "String",
+      "NoEcho": true,
+      "Description": "Mot de passe admin RDS (secret RDS_PASSWORD)"
+    },
+    "VpcId": {
+      "Type": "AWS::EC2::VPC::Id",
+      "Description": "VPC par défaut (auto-détecté dans le workflow)"
+    },
+    "SubnetIds": {
+      "Type": "List<AWS::EC2::Subnet::Id>",
+      "Description": "Subnets du VPC par défaut (auto-détectés dans le workflow)"
+    }
+  },
+  "Resources": {
+    "RDSS3ImportRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": { "Service": "rds.amazonaws.com" },
+            "Action": "sts:AssumeRole"
+          }]
+        },
+        "Policies": [{
+          "PolicyName": "rds-s3-import-gold-export",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "S3ListGoldExport",
+                "Effect": "Allow",
+                "Action": ["s3:ListBucket"],
+                "Resource": "arn:aws:s3:::s3-projet-efrei",
+                "Condition": { "StringLike": { "s3:prefix": "gold_export/*" } }
+              },
+              {
+                "Sid": "S3ReadGoldExport",
+                "Effect": "Allow",
+                "Action": ["s3:GetObject"],
+                "Resource": "arn:aws:s3:::s3-projet-efrei/gold_export/*"
+              },
+              {
+                "Sid": "KMSDecryptS3Objects",
+                "Effect": "Allow",
+                "Action": ["kms:Decrypt", "kms:DescribeKey"],
+                "Resource": { "Fn::ImportValue": "projet-efrei-kms-s3-arn" }
+              }
+            ]
+          }
+        }],
+        "Tags": [{ "Key": "Project", "Value": "ProjetEfrei" }]
+      }
+    },
+    "RDSSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "PostgreSQL access for NovaSight RDS",
+        "VpcId": { "Ref": "VpcId" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 5432,
+            "ToPort": 5432,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Tags": [{ "Key": "Project", "Value": "ProjetEfrei" }]
+      }
+    },
+    "RDSSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnet group for NovaSight RDS Gold",
+        "SubnetIds": { "Ref": "SubnetIds" },
+        "Tags": [{ "Key": "Project", "Value": "ProjetEfrei" }]
+      }
+    },
+    "RDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "DeletionPolicy": "Snapshot",
+      "Properties": {
+        "DBInstanceIdentifier": "rds-projet-efrei",
+        "DBInstanceClass": "db.t3.micro",
+        "Engine": "postgres",
+        "DBName": "novasight",
+        "MasterUsername": "novasight_admin",
+        "MasterUserPassword": { "Ref": "DBPassword" },
+        "AllocatedStorage": "20",
+        "StorageType": "gp3",
+        "StorageEncrypted": true,
+        "KmsKeyId": { "Fn::ImportValue": "projet-efrei-kms-rds-arn" },
+        "PubliclyAccessible": true,
+        "DBSubnetGroupName": { "Ref": "RDSSubnetGroup" },
+        "VPCSecurityGroups": [{ "Fn::GetAtt": ["RDSSecurityGroup", "GroupId"] }],
+        "AssociatedRoles": [
+          {
+            "FeatureName": "s3Import",
+            "RoleArn": { "Fn::GetAtt": ["RDSS3ImportRole", "Arn"] }
+          }
+        ],
+        "BackupRetentionPeriod": 0,
+        "DeletionProtection": false,
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Layer", "Value": "Gold" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "RDSEndpoint": {
+      "Value": { "Fn::GetAtt": ["RDSInstance", "Endpoint.Address"] },
+      "Export": { "Name": "projet-efrei-rds-endpoint" }
+    },
+    "RDSPort": {
+      "Value": { "Fn::GetAtt": ["RDSInstance", "Endpoint.Port"] },
+      "Export": { "Name": "projet-efrei-rds-port" }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: stg_trafic_velo
+    description: >
+      Cast des types depuis BRONZE.RAW_TRAFIC_VELO, dédupliqué par jour
+      (garde le dernier _loaded_at en cas de ré-exécution de la Lambda).
+    columns:
+      - name: compteur_id
+        tests:
+          - not_null
+      - name: date_jour
+        tests:
+          - not_null
+      - name: nb_passages
+        description: Nombre de passages castés en INT (NULL si non castable).
+
+  - name: stg_trafic_routier
+    description: >
+      Cast des types depuis BRONZE.RAW_TRAFIC_ROUTIER, dédupliqué par jour
+      (garde le dernier _loaded_at en cas de ré-exécution de la Lambda).
+    columns:
+      - name: arc_id
+        tests:
+          - not_null
+      - name: date_jour
+        tests:
+          - not_null
+      - name: etat_trafic
+        tests:
+          - accepted_values:
+              values: ['Fluide', 'Dense', 'Saturé', 'Bloqué', 'Inconnu', 'Pré-saturé']
+              severity: warn
+
+  - name: stg_stations_velib
+    description: >
+      Référentiel des stations Vélib', dédupliqué par stationcode
+      (garde le dernier _loaded_at par station).
+    columns:
+      - name: stationcode
+        tests:
+          - not_null
+          - unique
+      - name: nom_station
+        tests:
+          - not_null

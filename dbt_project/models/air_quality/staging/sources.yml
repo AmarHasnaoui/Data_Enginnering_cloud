@@ -1,0 +1,96 @@
+version: 2
+
+sources:
+  - name: bronze_air_quality
+    database: BRONZE
+    schema: AIR_QUALITY
+    description: "Données brutes chargées depuis S3 via Snowpipe (source LCSQA/INERIS - data.gouv.fr)"
+
+    tables:
+      - name: RAW_AIR_QUALITY
+        description: "Mesures horaires de qualité de l'air pour toute la France. Chaque ligne = une mesure d'un polluant sur une période donnée pour un capteur donné."
+        columns:
+          - name: date_debut
+            description: "Date et heure de début de la période de mesure (format brut : YYYY/MM/DD HH24:MI:SS)"
+            tests: [not_null]
+          - name: date_fin
+            description: "Date et heure de fin de la période de mesure"
+            tests: [not_null]
+          - name: organisme
+            description: "Organisme certificateur de la mesure (ex : Airparif)"
+            tests: [not_null]
+          - name: code_zas
+            description: "Code de la Zone Administrative de Surveillance"
+          - name: zas
+            description: "Libellé de la Zone Administrative de Surveillance"
+          - name: code_site
+            description: "Identifiant unique du capteur/station de mesure"
+            tests: [not_null]
+          - name: nom_site
+            description: "Nom de la station de mesure"
+          - name: type_implantation
+            description: "Type d'environnement du capteur (Urbaine, Périurbaine, Industrielle, Trafic...)"
+            tests:
+              - accepted_values:
+                  values: ['Urbaine', 'Périurbaine', 'Rurale nationale', 'Rurale près des villes', 'Rurale régionale']
+                  severity: warn
+          - name: polluant
+            description: "Polluant mesuré (NO2, PM10, PM2.5, O3, SO2, CO, C6H6...)"
+            tests: [not_null]
+          - name: type_influence
+            description: "Type d'influence de la source de pollution (Fond, Trafic, Industriel)"
+          - name: discriminant
+            description: "Discriminant de la mesure (A = automatique, M = manuelle)"
+          - name: reglementaire
+            description: "Indique si la mesure est réglementaire (valeur brute : 'Oui' / 'Non')"
+          - name: type_evaluation
+            description: "Type d'évaluation de la mesure (Mesure fixe, Mesure indicative...)"
+          - name: procedure_mesure
+            description: "Procédure ou méthode de mesure utilisée"
+          - name: type_valeur
+            description: "Type de valeur (Horaire, Journalière, Mensuelle...)"
+          - name: valeur
+            description: "Valeur mesurée du polluant (brute VARCHAR, castée en FLOAT dans staging)"
+          - name: valeur_brute
+            description: "Valeur brute avant validation/correction (brute VARCHAR)"
+          - name: unite_mesure
+            description: "Unité de la mesure (µg/m3, mg/m3...)"
+          - name: taux_saisie
+            description: "Taux de saisie des données en pourcentage (0-100)"
+          - name: couverture_temporelle
+            description: "Couverture temporelle de la mesure en pourcentage"
+          - name: couverture_donnees
+            description: "Couverture des données disponibles en pourcentage"
+          - name: code_qualite
+            description: "Code qualité de la mesure (A = valide, B = non-valide, C = incertain)"
+            tests:
+              - accepted_values:
+                  values: ['A', 'N', 'R']
+                  severity: warn
+          - name: validite
+            description: "Indicateur de validité numérique (1 = valide, -1 = non valide)"
+          - name: _file_name
+            description: "Nom du fichier S3 source chargé par Snowpipe (METADATA$FILENAME)"
+            tests: [not_null]
+          - name: _loaded_at
+            description: "Timestamp UTC de chargement par Snowpipe dans BRONZE"
+            tests: [not_null]
+
+      - name: RAW_COORDONNEES
+        description: "Référentiel géographique des capteurs/stations de mesure"
+        columns:
+          - name: code_site
+            description: "Identifiant unique du capteur/station (clé de jointure avec RAW_AIR_QUALITY)"
+            tests: [not_null, unique]
+          - name: latitude
+            description: "Latitude WGS84 du capteur (brute VARCHAR, castée en FLOAT dans staging)"
+            tests: [not_null]
+          - name: longitude
+            description: "Longitude WGS84 du capteur (brute VARCHAR, castée en FLOAT dans staging)"
+            tests: [not_null]
+          - name: _file_name
+            description: "Nom du fichier S3 source chargé par Snowpipe"
+            tests: [not_null]
+          - name: _loaded_at
+            description: "Timestamp UTC de chargement par Snowpipe dans BRONZE"
+            tests: [not_null]
