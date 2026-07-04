@@ -60,6 +60,120 @@ NovaSight est une plateforme data end-to-end de type **Smart City** centralisant
 | Complexité opérationnelle | **Faible** | Moyenne | Moyenne | 
 | **Décision** | **Retenu** | Non Retenu  | Non Retenu | 
 
+### 1.4 Justification des choix technologiques
+
+#### Snowflake  Pourquoi un Data Warehouse Cloud ?
+
+**Micro-partitions & stockage columnar**
+
+Snowflake stocke toutes les données en **micro-partitions** : des blocs continus de 50 à 500 MB de données non compressées, automatiquement organisés en format **columnar** (chaque colonne stockée indépendamment). À l'exécution d'une requête, Snowflake ne lit que les colonnes référencées et **élimine (prune) les micro-partitions** dont les métadonnées (min/max par colonne) indiquent qu'elles ne contiennent pas les valeurs recherchées. Sur nos tables Silver (millions de mesures AIRPARIF + trafic), un filtre `WHERE date_mesure = '2026-07-04'` ne parcourt qu'une fraction des micro-partitions.
+> Source : [docs.snowflake.com  Micro-partitions & Data Clustering](https://docs.snowflake.com/en/user-guide/tables-clustering-micropartitions)
+
+**Séparation stockage / calcul (architecture hybride)**
+
+Snowflake adopte une architecture hybride entre *shared-disk* et *shared-nothing* :
+- Le stockage centralisé est accessible par tous les nœuds de calcul comme shared-disk.
+- Le traitement des requêtes utilise du **MPP** (Massively Parallel Processing) où chaque nœud charge localement une portion du dataset  comme shared-nothing.
+
+Concrètement : plusieurs Virtual Warehouses peuvent lire les mêmes données **simultanément sans contention**, et le stockage continue d'exister même quand aucun WH n'est actif (AUTO_SUSPEND). C'est ce qui permet d'optimiser les coûts : on ne paie le compute que pendant l'exécution réelle.
+> Source : [docs.snowflake.com  Key concepts and architecture](https://docs.snowflake.com/en/user-guide/intro-key-concepts)
+
+**Virtual Warehouse  calcul distribué élastique**
+
+Un Virtual Warehouse est un **cluster de compute indépendant** (1 WH = N nœuds selon la taille XS→6XL). Chaque WH est isolé : ses performances ne sont pas affectées par l'activité des autres. Dans notre projet, `TRANSFORM_WH` (XS, 1 crédit/heure) est utilisé pour dbt + Snowpark + Tasks, avec `AUTO_SUSPEND = 60s` pour éviter toute facturation hors exécution.
+> Source : [docs.snowflake.com  Virtual warehouses](https://docs.snowflake.com/en/user-guide/warehouses)
+
+**Result Cache**
+
+Snowflake met en cache le résultat de chaque requête pendant **24 heures**. Si la même requête est ré-exécutée et que les données sous-jacentes n'ont pas changé, le résultat est retourné **sans consommer de crédits WH**. Utile pour les requêtes Snowsight répétitives sur les tables Silver.
+> Source : [docs.snowflake.com  Optimizing storage for performance](https://docs.snowflake.com/en/user-guide/performance-query-storage)
+
+**Snowpark Python calcul en place**
+
+Snowpark permet d'exécuter du spark directement dans Snowflake, **sans extraire les données**.
+
+---
+
+#### DynamoDB + Kafka  Pourquoi ce duo pour les données temps-réel Vélib ?
+
+**DynamoDB : NoSQL sub-milliseconde pour des données schemaless**
+
+L'API expose l'état des ~1500 stations Vélib en temps réel (simulation) : disponibilité des vélos, des docks, coordonnées GPS, statut de la station. Ce payload JSON peut évoluer (ajout de champs, types variables) sans préavis  une table relationnelle avec schéma fixe serait un frein constant aux mises à jour de l'API.
+
+DynamoDB répond à ce besoin avec propriétés clés :
+- **Latence en single-digit milliseconds** pour les lectures par clé primaire (GetItem). L'API FastAPI peut interroger l'état courant d'une station en temps réel sans passer par Snowflake (latence secondes) ni RDS (requête OLTP).
+- **Schemaless** : seule la clé primaire (`station_id`) est obligatoire ; tous les autres attributs sont libres, permettant l'ingestion du JSON tel quel sans ETL de mapping de colonnes.
+
+
+> Source : [docs.aws.amazon.com  Big Data Analytics Options  DynamoDB](https://docs.aws.amazon.com/whitepapers/latest/big-data-analytics-options/amazon-dynamodb.html)
+
+**Kafka sur EC2 : découplage producteur / consommateur**
+
+- **Découplage** : le producteur publie dans le topic `velib-realtime` sans attendre la confirmation DynamoDB (simulation).
+- **Rejeu** : en cas de panne du consommateur, les messages restent dans le topic et peuvent être re-consommés depuis le dernier offset commité.
+- **Buffer** : absorbe les pics d'écriture sans surcharger DynamoDB.
+
+**Pourquoi EC2 auto-géré plutôt qu'AWS MSK ?**
+
+AWS propose **Amazon MSK** (Managed Streaming for Apache Kafka), un Kafka entièrement managé (provisioning, patching, haute disponibilité multi-AZ). MSK serait le choix naturel en environnement business : zéro gestion d'infrastructure, SLA garanti, intégration native.
+
+Cependant, **MSK n'est pas inclus dans le Free Tier AWS**. Dans le cadre de ce projet réalisé sur un compte Free, nous avons choisi d'héberger Kafka directement sur une instance EC2 t3.micro (éligible Free Tier) : le broker Kafka et le consumer `consumer_velib.py` tournent sur la même instance. Cette approche implique de gérer manuellement l'installation, la configuration et la disponibilité du broker.
+
+En environnement de production avec un compte AWS payant, la migration vers MSK serait immédiate.
+
+---
+
+#### dbt  Pourquoi industrialiser les transformations SQL ?
+
+**Appliquer le génie logiciel à la data**
+
+Sans dbt, les transformations Silver sont des scripts SQL exécutés manuellement ou dans des tâches Snowflake sans versioning ni tests. dbt apporte les **bonnes pratiques du génie logiciel à l'analytique** :
+
+| Pratique | Implémentation dbt |
+|---|---|
+| Versioning | Chaque modèle est un fichier `.sql` dans Git |
+| Tests | `not_null`, `unique`, `accepted_values`, SQL custom |
+| CI/CD | Les modèles sont déployés via GitHub Actions |
+| Documentation | `schema.yml` auto-généré, consultable via `dbt docs serve et dans snowflake` |
+| Modularité | Chaque modèle est un `SELECT`, réutilisable par `ref()` |
+
+> Source : [docs.getdbt.com  What is dbt?](https://docs.getdbt.com/docs/introduction)
+
+**Lineage DAG et traçabilité**
+
+dbt construit un **DAG (Directed Acyclic Graph)** de tous les modèles, de leurs dépendances jusqu'aux sources. Dans notre pipeline Silver, le DAG expose explicitement la chaîne `stg_air_quality → int_air_quality_idf → zones` sans avoir à lire le code SQL pour comprendre les dépendances. Cette traçabilité est notamment utile pour identifier l'impact amont d'un changement de schéma source (AIRPARIF, OpenData Paris).
+
+> Source : [docs.getdbt.com  Data lineage](https://docs.getdbt.com/terms/data-lineage)
+
+**Tests de qualité des données en Silver**
+
+Chaque modèle Silver est couvert par des tests déclaratifs dans `schema.yml`. Exemple sur la table `stg_air_quality` :
+- `station_id` : `not_null` + `unique`
+- `valeur` : `not_null` (aucune mesure vide ne passe en Silver)
+- `polluant` : `accepted_values` (NO2, PM10, PM2.5, O3, SO2)
+
+Un test en échec lors du `dbt test` bloque garantissant que les tables Gold (et l'API) ne reçoivent que des données conformes.
+
+**Intégration native Snowflake**
+
+L'adaptateur `dbt-snowflake` exécute les `SELECT` directement dans Snowflake via le Virtual Warehouse `TRANSFORM_WH`. Aucune extraction de données hors de Snowflake n'est nécessaire : dbt matérialise les résultats en tables ou vues dans le schéma Silver via `CREATE TABLE AS SELECT`.
+
+---
+
+#### Snowpipe  Pourquoi une ingestion event-driven plutôt qu'un COPY INTO planifié ?
+
+L'alternative à Snowpipe serait un `COPY INTO` exécuté sur un Virtual Warehouse à intervalles réguliers. Ce pattern présente un problème fondamental : **le WH est actif et facturé même si aucun fichier n'est arrivé en S3** depuis le dernier run.
+
+Snowpipe résout ce problème en adoptant une ingestion **pilotée par les événements** :
+
+1. Dès qu'un fichier est déposé dans un préfixe Bronze de S3, S3 publie une notification dans la **file SQS gérée par snowflake** associée au Snowpipe.
+2. Snowpipe consomme le message SQS et charge le fichier dans la table Snowflake cible via un **compute serverless interne**  distinct du Virtual Warehouse, facturé uniquement au volume de données chargé.
+3. Si aucun fichier n'arrive (pipeline en pause, API source indisponible), **aucun crédit n'est consommé**.
+
+Les fichiers sont chargés en quelques secondes après leur dépôt en S3, sans intervention humaine et sans coût fixe.
+
+> Source : [docs.snowflake.com  Snowpipe overview](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro)
+
 ---
 
 ## 2. Prérequis & configuration initiale
@@ -288,7 +402,7 @@ tests:
 
 ### 3.3 Gold  Snowpark Python
 
-**Principe :** Une Stored Procedure Snowpark Python calcule les 7 datamarts Gold depuis les tables Silver, gère le delta via watermark, et exporte en Parquet vers S3.
+**Principe :** Une Stored Procedure Snowpark (spark sur snowflake) Python calcule les 7 datamarts Gold depuis les tables Silver tout en utilisant la puissance de snowflake avec un calcul distribué dans le warehouse, gère le delta via watermark, et exporte en Parquet vers S3.
 
 **Stored Procedure `SP_EXPORT_GOLD_TO_S3` :**
 ![SP_GOLD](../images/sp.png)
@@ -335,6 +449,15 @@ API Vélib temps réel
 ---
 
 ### 3.5 Serving Layer  Lambda RDS Import
+
+**Pourquoi RDS PostgreSQL et pas Snowflake directement ?**
+
+Le pipeline analytique utilise Snowflake comme moteur **OLAP** (Online Analytical Processing) : il est optimisé pour des requêtes complexes sur de grands volumes (scans complets, agrégations, jointures multi-tables), avec une latence de l'ordre de la **seconde**. Ce moteur convient parfaitement aux traitements dbt et Snowpark qui s'exécutent une fois par jour.
+
+L'API REST exposée au dashboard Streamlit a des contraintes radicalement différentes : chaque appel utilisateur doit retourner une réponse en **< 50 ms**. C'est le domaine de l'**OLTP** (Online Transactional Processing), optimisé pour des lectures indexées sur des volumes maîtrisés.
+
+
+Les 7 datamarts Gold sont calculés une fois par jour dans Snowflake (Snowpark), exportés en Parquet vers S3, puis chargés dans RDS via UPSERT. L'API interroge uniquement RDS Snowflake n'est jamais sollicité en temps réel.
 
 **Principe :** Chaque Parquet déposé dans S3 Gold déclenche automatiquement une Lambda via EventBridge "Put Event" qui charge les données dans RDS via UPSERT idempotent.
 
