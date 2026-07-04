@@ -93,6 +93,12 @@
                   }
                 },
                 {
+                  "Action": "sns:Publish",
+                  "Resource": { "Fn::ImportValue": "projet-efrei-sns-topic-arn" },
+                  "Sid": "Sns",
+                  "Effect": "Allow"
+                },
+                {
                   "Sid": "CloudWatchLogs",
                   "Effect": "Allow",
                   "Action": [

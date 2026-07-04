@@ -1,9 +1,9 @@
 name: Deploy infra AWS
 
 on:
-  # push:
-  #   branches:
-  #     - dev_amar
+  push:
+    branches:
+      - dev_amar
   workflow_dispatch:
 
 jobs:
@@ -27,6 +27,16 @@ jobs:
           aws cloudformation deploy \
             --stack-name projet-efrei-kms \
             --template-file infra_aws/kms/cloudformation/template/kms-projet-efrei.json \
+            --no-fail-on-empty-changeset
+
+      # --- SNS Alertes (après KMS, indépendant des autres stacks) ---
+      - name: Deploy SNS stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-sns \
+            --template-file infra_aws/sns/cloudformation/template/sns-projet-efrei.json \
+            --parameter-overrides \
+              AlertEmail=${{ secrets.ALERT_EMAIL }} \
             --no-fail-on-empty-changeset
 
       # --- S3 (après KMS : importe projet-efrei-kms-s3-arn) ---
