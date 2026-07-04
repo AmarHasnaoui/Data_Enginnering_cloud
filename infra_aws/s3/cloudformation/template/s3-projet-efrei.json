@@ -49,8 +49,10 @@
         "BucketEncryption": {
           "ServerSideEncryptionConfiguration": [
             {
+              "BucketKeyEnabled": true,
               "ServerSideEncryptionByDefault": {
-                "SSEAlgorithm": "AES256"
+                "SSEAlgorithm": "aws:kms",
+                "KMSMasterKeyID": { "Fn::ImportValue": "projet-efrei-kms-s3-arn" }
               }
             }
           ]

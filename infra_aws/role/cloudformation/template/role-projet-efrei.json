@@ -103,6 +103,16 @@
                   "Resource": {
                     "Fn::Sub": "arn:aws:logs:eu-west-3:${AWS::AccountId}:log-group:/aws/lambda/projet-efrei-*:*"
                   }
+                },
+                {
+                  "Sid": "KMSAccessS3",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:GenerateDataKey",
+                    "kms:Decrypt",
+                    "kms:DescribeKey"
+                  ],
+                  "Resource": { "Fn::ImportValue": "projet-efrei-kms-s3-arn" }
                 }
               ]
             }

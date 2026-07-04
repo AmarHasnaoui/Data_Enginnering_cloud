@@ -45,6 +45,12 @@
                 "Effect": "Allow",
                 "Action": ["s3:GetObject"],
                 "Resource": "arn:aws:s3:::s3-projet-efrei/gold_export/*"
+              },
+              {
+                "Sid": "KMSDecryptS3Objects",
+                "Effect": "Allow",
+                "Action": ["kms:Decrypt", "kms:DescribeKey"],
+                "Resource": { "Fn::ImportValue": "projet-efrei-kms-s3-arn" }
               }
             ]
           }
@@ -87,7 +93,9 @@
         "MasterUsername": "novasight_admin",
         "MasterUserPassword": { "Ref": "DBPassword" },
         "AllocatedStorage": "20",
-        "StorageType": "gp2",
+        "StorageType": "gp3",
+        "StorageEncrypted": true,
+        "KmsKeyId": { "Fn::ImportValue": "projet-efrei-kms-rds-arn" },
         "PubliclyAccessible": true,
         "DBSubnetGroupName": { "Ref": "RDSSubnetGroup" },
         "VPCSecurityGroups": [{ "Fn::GetAtt": ["RDSSecurityGroup", "GroupId"] }],

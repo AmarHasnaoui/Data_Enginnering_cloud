@@ -1,9 +1,9 @@
 name: Deploy infra AWS
 
 on:
-  # push:
-  #   branches:
-  #     - dev_amar
+  push:
+    branches:
+      - dev_amar
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-3
 
-      # --- S3 (à déployer en premier : les autres stacks en dépendent) ---
+      # --- KMS (à déployer en 1er : S3, IAM et RDS en importent les ARNs) ---
+      - name: Deploy KMS stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name projet-efrei-kms \
+            --template-file infra_aws/kms/cloudformation/template/kms-projet-efrei.json \
+            --no-fail-on-empty-changeset
+
+      # --- S3 (après KMS : importe projet-efrei-kms-s3-arn) ---
       # SQS ARNs vides au 1er run → pas de notifications (condition HasSnowpipeNotifications=false)
       # Après création des Snowpipes, ajouter les secrets SNOWPIPE_*_SQS_ARN et relancer
       - name: Deploy S3 stack

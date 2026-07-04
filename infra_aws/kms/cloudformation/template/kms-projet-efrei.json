@@ -1,0 +1,86 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CMK KMS pour chiffrement S3 et RDS - NovaSight",
+  "Resources": {
+    "KMSKeyS3": {
+      "Type": "AWS::KMS::Key",
+      "Properties": {
+        "Description": "CMK chiffrement bucket S3 NovaSight (Bronze + Gold)",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "EnableIAMUserPermissions",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  { "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:root" },
+                  { "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:user/amine" }
+                ]
+              },
+              "Action": "kms:*",
+              "Resource": "*"
+            }
+          ]
+        },
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Service", "Value": "S3" }
+        ]
+      }
+    },
+    "KMSKeyS3Alias": {
+      "Type": "AWS::KMS::Alias",
+      "Properties": {
+        "AliasName": "alias/projet-efrei-s3",
+        "TargetKeyId": { "Ref": "KMSKeyS3" }
+      }
+    },
+    "KMSKeyRDS": {
+      "Type": "AWS::KMS::Key",
+      "Properties": {
+        "Description": "CMK chiffrement RDS PostgreSQL NovaSight Gold",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "EnableIAMUserPermissions",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  { "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:root" },
+                  { "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:user/amine" }
+                ]
+              },
+              "Action": "kms:*",
+              "Resource": "*"
+            }
+          ]
+        },
+        "Tags": [
+          { "Key": "Project", "Value": "ProjetEfrei" },
+          { "Key": "Service", "Value": "RDS" }
+        ]
+      }
+    },
+    "KMSKeyRDSAlias": {
+      "Type": "AWS::KMS::Alias",
+      "Properties": {
+        "AliasName": "alias/projet-efrei-rds",
+        "TargetKeyId": { "Ref": "KMSKeyRDS" }
+      }
+    }
+  },
+  "Outputs": {
+    "KMSKeyS3Arn": {
+      "Value": { "Fn::GetAtt": ["KMSKeyS3", "Arn"] },
+      "Export": { "Name": "projet-efrei-kms-s3-arn" }
+    },
+    "KMSKeyRDSArn": {
+      "Value": { "Fn::GetAtt": ["KMSKeyRDS", "Arn"] },
+      "Export": { "Name": "projet-efrei-kms-rds-arn" }
+    }
+  }
+}
