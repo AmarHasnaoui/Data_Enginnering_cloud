@@ -9,7 +9,11 @@ CREATE OR REPLACE NOTIFICATION INTEGRATION SNS_NOVASIGHT_ALERTS
   AWS_SNS_ROLE_ARN  = 'arn:aws:iam::${AWS_ACCOUNT_ID}:role/projet-efrei-role';  
 
 
--- Rattacher la notification aux Tasks existantes
+-- Suspendre avant modification (obligatoire si la task est active)
+ALTER TASK SILVER.TRANSFORMATION.TASK_EXPORT_GOLD_TO_S3 SUSPEND;
+ALTER TASK SILVER.TRANSFORMATION.TASK_RUN_DBT_ALL SUSPEND;
+
+-- Rattacher la notification aux Tasks
 ALTER TASK SILVER.TRANSFORMATION.TASK_RUN_DBT_ALL
   SET ERROR_INTEGRATION = SNS_NOVASIGHT_ALERTS;
 
