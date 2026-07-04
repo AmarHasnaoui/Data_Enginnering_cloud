@@ -1,9 +1,6 @@
 name: Deploy infra AWS
 
 on:
-  # push:
-  #   branches:
-  #     - dev_amar
   workflow_dispatch:
 
 jobs:

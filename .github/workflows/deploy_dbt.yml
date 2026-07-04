@@ -1,9 +1,6 @@
 name: Deploy dbt to Snowflake
 
 on:
-  # push:
-  #   branches:
-  #     - dev_amar
   workflow_dispatch:
 
 jobs:

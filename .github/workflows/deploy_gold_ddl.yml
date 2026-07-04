@@ -1,9 +1,6 @@
 name: Deploy Gold DDL (Snowflake Postgres)
 
 on:
-  # push:
-  #   branches:
-  #     - dev_amar
   workflow_dispatch:
 
 jobs:

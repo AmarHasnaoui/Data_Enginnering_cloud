@@ -1,9 +1,6 @@
 name: Deploy API (FastAPI + Cognito + API Gateway)
 
 on:
-  # push:
-  #   branches:
-  #     - dev_amar
   workflow_dispatch:
 
 env:

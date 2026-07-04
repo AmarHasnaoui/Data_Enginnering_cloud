@@ -1,9 +1,6 @@
 name: Deploy Snowflake DDL
 
 on:
-  push:
-    branches:
-      - dev_amar
   workflow_dispatch:
 
 jobs:
