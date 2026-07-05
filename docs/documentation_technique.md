@@ -737,6 +737,67 @@ Les tasks Snowflake (`TASK_RUN_DBT_ALL` -> `TASK_EXPORT_GOLD_TO_S3`) publient su
 | EC2 Reserved Instance 1 an (Kafka) | −19 % vs on-demand | ~$13,76/mois vs $16,992/mois (Paris eu-west-3) |
 | S3 Bucket Key KMS | −99 % appels KMS API | `BucketKeyEnabled: true` 1 clé de données par bucket au lieu de 1 par objet |
 
+### 8.5 Comparatifs de services
+
+Un tableau comparatif avant chaque choix de service. Les critères évalués sont : coût, performance, intégration avec la stack, complexité opérationnelle, disponibilité d'un free tier, risque de vendor lock-in.
+
+---
+
+#### Data Warehouse Cloud : Snowflake vs Redshift vs BigQuery
+
+| Critère | **Snowflake**  | Amazon Redshift | Google BigQuery |
+|---|---|---|---|
+| **Coût compute** | $5,20/crédit (Business Critical) · XS = 1 crédit/h → $5,20/h · AUTO_SUSPEND évite la facturation à vide | ra3.large : $0,633/h/nœud, 2nœuds=$1,27/h **même sans requête** | On-demand : ~$7,8125/TB scanné · 1 TB/mois gratuit · facturation à la requête |
+| **Coût stockage** | $24/TB/mois | $0,025/GB/mois ($25/TB) | $0,05/GB/mois ($50/TB) actif |
+| **Performance** | MPP, micro-partitions, pruning automatique, Result Cache 24h | MPP solide, mais performances dépendent du tri des colonnes | Serverless, colonnar, performant mais latence variable selon slot disponibles |
+| **Intégration stack** | Native dbt-snowflake, Snowpipe SQS, Snowpark Python, Tasks intégration directe avec notre S3 AWS | AWS-native : Redshift Spectrum sur S3, Glue, Lambda | BigQuery Transfer Service intégration S3 |
+| **Complexité opérationnelle** | Zéro administration infrastructure Virtual Warehouse auto-géré | Administration cluster (resize, maintenance, vacuum/analyze réguliers) | Zéro infrastructure serverless natif |
+| **Free tier / crédits** | $400 de crédits trial (utilisés en dev) | Pas de free tier | 1 TB/mois de requêtes gratuit · 10 GB stockage/mois |
+| **Vendor lock-in** | SQL standard + Snowpark Python · données exportables Parquet tourne sur AWS/GCP/Azure | SQL Redshift données exportables S3 AWS-only | SQL standard + BigQuery ML  données exportables GCP-only |
+| **Décision retenue** | **Retenu**  séparation stockage/compute (pas de facturation à vide), intégration native avec notre stack AWS (Snowpipe SQS, IAM Storage Integration), multi-cloud portable | Non retenu  cluster toujours facturé même inactif| Non retenu  GCP-native stockage couteux |
+
+> Sources : 
+>- [snowflake.com/pricing](https://www.snowflake.com/pricing/) 
+>- [aws.amazon.com/redshift/pricing](https://aws.amazon.com/redshift/pricing/) 
+>- [cloud.google.com/bigquery/pricing](https://cloud.google.com/bigquery/pricing)
+
+---
+
+#### Orchestration : Step Functions vs Airflow self-hosted vs MWAA
+
+| Critère | **AWS Step Functions** | Apache Airflow self-hosted | Amazon MWAA |
+|---|---|---|---|
+| **Coût** | $0,000025 / transition d'état avec 4 000 transitions/mois **gratuites à vie** -> **dans le free tier** | EC2 t3.medium ~$0,0472/h -> ~$34/mois | Small env : $0,58/h → **~$417/mois** (Si toujours actif) |
+| **Performance** | Exécution parallèle native, retry par step, timeout configurable | DAG Celery/Redis | Identique Airflow |
+| **Intégration stack** | Native AWS : Lambda, ECS, Glue, SNS, CloudWatch · déclenchable par EventBridge | Plugin AWS disponible mais configuration manuelle des credentials | Native AWS : IAM roles, S3, CloudWatch natif |
+| **Complexité opérationnelle** | Zéro serveur à gérer · définition JSON/YAML, visual debugger console AWS | Installation, upgrade Airflow, Celery workers, Redis | Zéro serveur mais configuration MWAA complexe (VPC...) |
+| **Free tier / crédits** | **4 000 transitions/mois gratuites à vie** (non limité à 12 mois) | Pas de free tier (coût EC2) | Pas de free tier |
+| **Vendor lock-in** | AWS-only ASL (Amazon States Language) propriétaire mais simple | Open source portable tout cloud | AWS-only DAGs Airflow standard (portable) |
+| **Décision retenue** | **Retenu** entièrement dans le free tier pour notre volume, zéro infrastructure, retry natif par step, alertes SNS natives via EventBridge | Non retenu, coût EC2 dédié + charge opérationnelle (upgrades, workers) injustifiée | Non retenu, MWAA pertinent à partir de centaines de DAGs complexes |
+
+> Sources : 
+> - [aws.amazon.com/step-functions/pricing](https://aws.amazon.com/step-functions/pricing/) 
+>- [aws.amazon.com/managed-workflows-for-apache-airflow/pricing](https://aws.amazon.com/managed-workflows-for-apache-airflow/pricing/)
+
+---
+
+#### Dashboard Gold : Streamlit vs Metabase vs Apache Superset
+
+| Critère | **Streamlit** | Metabase | Apache Superset |
+|---|---|---|---|
+| **Coût** | Open source, self-hosted ou snowflake cloud | Open source self-hosted (gratuit) ou Metabase Cloud $575/mois | Open source, self-hosted (gratuit) |
+| **Performance** | Rendu côté serveur Python, temps de réponse dépend du backend | Cache interne, requêtes SQL directes sur la BDD | Cache,Redis, requêtes SQL + API |
+| **Intégration stack** | **Python natif** | Connecteur PostgreSQL natif, pas de connexion DynamoDB native | Connecteur PostgreSQL natif, pas de connexion DynamoDB native |
+| **Complexité opérationnelle** | Déploiement `streamlit run app.py`, code Python = même langage que le reste du projet | Interface drag-and-drop, aucune compétence Python requise | Setup complexe (Redis, Celery, PostgreSQL) avec courbe d'apprentissage élevée |
+| **Free tier / crédits** | Gratuit, Streamlit Community Cloud disponible pour hébergement public | Gratuit self-hosted | Gratuit self-hosted |
+| **Vendor lock-in** | Code Python standard, aucune dépendance propriétaire | Métadonnées propriétaires Metabase (collections, questions) | Open source Apache, communauté active |
+| **Décision retenue** | **Retenu** seul outil permettant d'intégrer en Python les trois sources Gold (RDS PostgreSQL, DynamoDB temps réel, API FastAPI) dans un seul dashboard interactif, sans coût additionnel | Non retenu, interface drag-and-drop inadaptée aux visualisations géospatiales et à l'intégration DynamoDB | Non retenu, complexité mise en place|
+
+> Sources : 
+>- [streamlit.io](https://streamlit.io)
+>- [metabase.com/pricing](https://www.metabase.com/pricing) 
+>- [superset.apache.org](https://superset.apache.org)
+
 ---
 
 ## 9. Sécurité  Chiffrement KMS & RGPD
