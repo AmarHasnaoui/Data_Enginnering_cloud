@@ -156,7 +156,7 @@ Un test en échec lors du `dbt test` bloque garantissant que les tables Gold (et
 
 **Intégration native Snowflake**
 
-L'adaptateur `dbt-snowflake` exécute les `SELECT` directement dans Snowflake via le Virtual Warehouse `TRANSFORM_WH`. Aucune extraction de données hors de Snowflake n'est nécessaire : dbt matérialise les résultats en tables ou vues dans le schéma Silver via `CREATE TABLE AS SELECT`.
+L'adaptateur `dbt-snowflake` exécute les `SELECT` directement dans Snowflake via le Virtual Warehouse `TRANSFORM_WH`. Aucune extraction de données hors de Snowflake n'est nécessaire : dbt matérialise les résultats en tables ou vues dans le schéma Silver via `CREATE TABLE AS SELECT` tout en utilisant la puissance du calcule distribué de snowflake.
 
 ---
 
@@ -480,16 +480,17 @@ S3 PUT gold_export/dm_air_quality_daily/20260701.parquet
 
 **FastAPI** (`infra_aws/api/code/main.py`) déployée sur Lambda + Mangum (adapter ASGI) :
 
-| Endpoint | Source |
-|---|---|
-| `GET /air-quality` | RDS `dm_air_quality_daily` | 
-| `GET /air-quality/alertes` | RDS `dm_alertes_pollution` |
-| `GET /mobilite/trafic/daily-avg` | RDS `dm_trafic_routier_daily` | 
-| `GET /mobilite/velo` | RDS `dm_velo_daily` |
-| `GET /mobilite/velib` | DynamoDB | 
-| `GET /kpi/summary` | RDS `dm_smartcity_kpi_daily` | 
-| `GET /zones/kpi` | RDS `dm_zone_kpi_daily` | 
-| `GET /zones/arrondissements` | RDS `ref_arrondissements` |
+| Endpoint                         | Source                        |
+| -------------------------------- | ----------------------------- |
+| `GET /air-quality`               | RDS `dm_air_quality_daily`    |
+| `GET /air-quality/alertes`       | RDS `dm_alertes_pollution`    |
+| `GET /mobilite/trafic/daily-avg` | RDS `dm_trafic_routier_daily` |
+| `GET /mobilite/velo`             | RDS `dm_velo_daily`           |
+| `GET /mobilite/velib`            | DynamoDB                      |
+| `GET /kpi/summary`               | RDS `dm_smartcity_kpi_daily`  |
+| `GET /zones/kpi`                 | RDS `dm_zone_kpi_daily`       |
+| `GET /zones/arrondissements`     | RDS `ref_arrondissements`     |
+
 ---
 
 ## 4. Guide de déploiement
@@ -589,13 +590,13 @@ L'orchestration batch est assurée par **Step Function et Snowflake Tasks** cha�
 
 ### 5.3 Scheduling complet
 
-| Heure UTC | Action | Durée estimée |
-|---|---|---|
-| 07h00 | Lambda Extraction -> S3 Bronze | ~1 min |
-| Automatique via SQS | Snowpipe -> Snowflake Bronze | ~1 min |
-| 08h00 | TASK_RUN_DBT_ALL | ~1 min |
-| Automatique avec dépendence Task 1 | TASK_EXPORT_GOLD_TO_S3 | ~1 min |
-| Automatique via EventBridge | ~2 min |
+| Heure UTC                          | Action                         | Durée estimée |
+| ---------------------------------- | ------------------------------ | ------------- |
+| 07h00 via EventBridge              | Lambda Extraction -> S3 Bronze | ~1 min        |
+| Automatique via SQS                | Snowpipe -> Snowflake Bronze   | ~1 min        |
+| 08h00 via cron snowflake           | TASK_RUN_DBT_ALL               | ~1 min        |
+| Automatique avec dépendence Task 1 | TASK_EXPORT_GOLD_TO_S3         | ~1 min        |
+| Automatique via EventBridge        | ~2 min                         |               |
 
 ---
 
@@ -747,16 +748,16 @@ Un tableau comparatif avant chaque choix de service. Les critères évalués son
 
 #### Data Warehouse Cloud : Snowflake vs Redshift vs BigQuery
 
-| Critère | **Snowflake**  | Amazon Redshift | Google BigQuery |
-|---|---|---|---|
-| **Coût compute** | $5,20/crédit (Business Critical) · XS = 1 crédit/h → $5,20/h · AUTO_SUSPEND évite la facturation à vide | ra3.large : $0,633/h/nœud, 2nœuds=$1,27/h **même sans requête** | On-demand : ~$7,8125/TB scanné · 1 TB/mois gratuit · facturation à la requête |
-| **Coût stockage** | $24/TB/mois | $0,025/GB/mois ($25/TB) | $0,05/GB/mois ($50/TB) actif |
-| **Performance** | MPP, micro-partitions, pruning automatique, Result Cache 24h | MPP solide, mais performances dépendent du tri des colonnes | Serverless, colonnar, performant mais latence variable selon slot disponibles |
-| **Intégration stack** | Native dbt-snowflake, Snowpipe SQS, Snowpark Python, Tasks intégration directe avec notre S3 AWS | AWS-native : Redshift Spectrum sur S3, Glue, Lambda | BigQuery Transfer Service intégration S3 |
-| **Complexité opérationnelle** | Zéro administration infrastructure Virtual Warehouse auto-géré | Administration cluster (resize, maintenance, vacuum/analyze réguliers) | Zéro infrastructure serverless natif |
-| **Free tier / crédits** | $400 de crédits trial (utilisés en dev) | Pas de free tier | 1 TB/mois de requêtes gratuit · 10 GB stockage/mois |
-| **Vendor lock-in** | SQL standard + Snowpark Python · données exportables Parquet tourne sur AWS/GCP/Azure | SQL Redshift données exportables S3 AWS-only | SQL standard + BigQuery ML  données exportables GCP-only |
-| **Décision retenue** | **Retenu**  séparation stockage/compute (pas de facturation à vide), intégration native avec notre stack AWS (Snowpipe SQS, IAM Storage Integration), multi-cloud portable | Non retenu  cluster toujours facturé même inactif| Non retenu  GCP-native stockage couteux |
+| Critère                       | **Snowflake**                                                                                                                                                              | Amazon Redshift                                                        | Google BigQuery                                                               |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Coût compute**              | $5,20/crédit (Business Critical) · XS = 1 crédit/h → $5,20/h · AUTO_SUSPEND évite la facturation à vide                                                                    | ra3.large : $0,633/h/nœud, 2nœuds=$1,27/h **même sans requête**        | On-demand : ~$7,8125/TB scanné · 1 TB/mois gratuit · facturation à la requête |
+| **Coût stockage**             | $24/TB/mois                                                                                                                                                                | $0,025/GB/mois ($25/TB)                                                | $0,05/GB/mois ($50/TB) actif                                                  |
+| **Performance**               | MPP, micro-partitions, pruning automatique, Result Cache 24h                                                                                                               | MPP solide, mais performances dépendent du tri des colonnes            | Serverless, colonnar, performant mais latence variable selon slot disponibles |
+| **Intégration stack**         | Native dbt-snowflake, Snowpipe SQS, Snowpark Python, Tasks intégration directe avec notre S3 AWS                                                                           | AWS-native : Redshift Spectrum sur S3, Glue, Lambda                    | BigQuery Transfer Service intégration S3                                      |
+| **Complexité opérationnelle** | Zéro administration infrastructure Virtual Warehouse auto-géré                                                                                                             | Administration cluster (resize, maintenance, vacuum/analyze réguliers) | Zéro infrastructure serverless natif                                          |
+| **Free tier / crédits**       | $400 de crédits trial (utilisés en dev)                                                                                                                                    | Pas de free tier                                                       | 1 TB/mois de requêtes gratuit · 10 GB stockage/mois                           |
+| **Vendor lock-in**            | SQL standard + Snowpark Python · données exportables Parquet tourne sur AWS/GCP/Azure                                                                                      | SQL Redshift données exportables S3 AWS-only                           | SQL standard + BigQuery ML  données exportables GCP-only                      |
+| **Décision retenue**          | **Retenu**  séparation stockage/compute (pas de facturation à vide), intégration native avec notre stack AWS (Snowpipe SQS, IAM Storage Integration), multi-cloud portable | Non retenu  cluster toujours facturé même inactif                      | Non retenu  GCP-native stockage couteux                                       |
 
 > Sources : 
 >- [snowflake.com/pricing](https://www.snowflake.com/pricing/) 
@@ -867,11 +868,13 @@ Les rôles Snowflake suivent le même principe : chaque rôle n'accède qu'aux s
 
 ### 9.6 Politique de rétention des données
 
-| Couche | Support | Rétention | Mécanisme |
-|---|---|---|---|
-| Bronze | S3 | 90 jours | S3 Lifecycle : Glacier après 90 j |
-| Silver | Snowflake | Illimité | Conservation analytique |
-| Gold | S3 | 90 jours (delta) |  Lifecycle après 90 j |
-| Gold | RDS PostgreSQL | Illimité | UPSERT (pas de doublons) |
-| Vélib | DynamoDB | temps réel | dernier état seulement |
+| Couche           | Support        | Rétention        | Mécanisme                         |
+| ---------------- | -------------- | ---------------- | --------------------------------- |
+| Bronze           | S3             | 90 jours         | S3 Lifecycle : Glacier après 90 j |
+| Silver           | Snowflake      | Illimité         | Conservation analytique           |
+| Gold             | S3             | 90 jours (delta) | Lifecycle après 90 j              |
+| Gold             | RDS PostgreSQL | Illimité         | UPSERT (pas de doublons)          |
+| Vélib temps réel | DynamoDB       | temps réel       | dernier état seulement            |
+| Bronze           | Snowflake      | Illimité         | Conservation pour rejeu           |
+
 ---
