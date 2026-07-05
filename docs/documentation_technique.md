@@ -596,7 +596,7 @@ L'orchestration batch est assurée par **Step Function et Snowflake Tasks** cha�
 | Automatique via SQS                | Snowpipe -> Snowflake Bronze   | ~1 min        |
 | 08h00 via cron snowflake           | TASK_RUN_DBT_ALL               | ~1 min        |
 | Automatique avec dépendence Task 1 | TASK_EXPORT_GOLD_TO_S3         | ~1 min        |
-| Automatique via EventBridge        | ~2 min                         |               |
+| Automatique via EventBridge        | Lambda import                  | ~2 min        |
 
 ---
 
@@ -877,4 +877,3 @@ Les rôles Snowflake suivent le même principe : chaque rôle n'accède qu'aux s
 | Vélib temps réel | DynamoDB       | temps réel       | dernier état seulement            |
 | Bronze           | Snowflake      | Illimité         | Conservation pour rejeu           |
 
----
