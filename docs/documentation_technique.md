@@ -566,6 +566,8 @@ python run_gold_ddl.py
 3. Configurer les secrets dans l'interface Streamlit Cloud
 4. Deployer
 
+![Streamlit](../images/streamlit.png)
+
 ## 5. Orchestration
 
 ### 5.1 DAG des tâches aws et Snowflake
