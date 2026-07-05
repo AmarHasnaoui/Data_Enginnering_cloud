@@ -177,7 +177,7 @@ Dans le cadre du Master 2 Data Engineering & Intelligence Artificielle de l'EFRE
 | AIRPARIF / données air IDF | API publique | Horaire | CSV | ~50000 mesures/jour |
 | Compteurs vélo Paris | API Open Data Paris | Horaire | JSON | ~2 000 lignes/jour |
 | Trafic routier Paris | API Open Data Paris | Horaire | JSON | ~70 000 lignes/jour |
-| Vélib Metropole | API JCDecaux temps réel | Continue | JSON | ~1 400 stations |
+| Vélib Metropole | API temps réel | Continue | JSON | ~1 400 stations |
 | Référentiel arrondissements | Statique | Ponctuel | GeoJSON | 20 arrondissements |
 
 ---
