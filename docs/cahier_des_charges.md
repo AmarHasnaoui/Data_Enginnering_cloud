@@ -10,7 +10,7 @@
 | Version | 1.0 |
 | Date | Juin 2026 |
 | Auteurs | Amar HASNAOUI, Amine NAIT SIDHOUM |
-| Encadrante | Steve Elonga |
+| Encadrant | Steve Elanga |
 | Établissement | EFREI Paris  Master 2 Data Engineering & Intelligence Artificielle |
 
 ---
@@ -60,7 +60,7 @@ Dans le cadre du Master 2 Data Engineering & Intelligence Artificielle de l'EFRE
 |---|---|
 | Amar HASNAOUI | Data Engineer/Architecture cloud |
 | Amine NAIT SIDHOUM | Data Scientist/Analyst  |
-| Steve Elonga | Encadrant pédagogique EFREI |
+| Steve Elanga | Encadrant pédagogique EFREI |
 | Utilisateurs finaux | Tout profil souhaitant consulter les données Smart City Paris via le dashboard |
 
 ---
