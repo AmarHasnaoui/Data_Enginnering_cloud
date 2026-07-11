@@ -9,6 +9,7 @@ SELECT
     t.date_jour,
     t.arc_id,
     t.debit_moyen,
+    t.total_vehicules_jour,
     t.taux_occupation_moyen,
     t.nb_heures_bloque
 FROM {{ ref('int_trafic_daily') }} AS t

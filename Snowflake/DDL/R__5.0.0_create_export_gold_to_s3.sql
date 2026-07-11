@@ -242,6 +242,7 @@ def run(session):
         .filter(F.col('date_jour') > F.lit(wm))
         .group_by('arrondissement_code','date_jour')
         .agg(F.avg('debit_moyen').alias('debit_routier_moyen'),
+             F.sum('total_vehicules_jour').alias('total_vehicules'),
              F.avg('taux_occupation_moyen').alias('taux_occupation_moyen'),
              F.sum('nb_heures_bloque').alias('total_heures_bloque'))
     )
@@ -270,12 +271,13 @@ def run(session):
         .with_column('ratio_mobilite_verte',
             F.when(
                 (F.coalesce(F.col('total_velos'),F.lit(0))
-                 + F.coalesce(F.col('debit_routier_moyen'),F.lit(0))) > F.lit(0),
+                 + F.coalesce(F.col('total_vehicules'),F.lit(0))) > F.lit(0),
                 F.coalesce(F.col('total_velos'),F.lit(0))
                 / (F.coalesce(F.col('total_velos'),F.lit(0))
-                   + F.coalesce(F.col('debit_routier_moyen'),F.lit(0)))
+                   + F.coalesce(F.col('total_vehicules'),F.lit(0)))
             ).otherwise(F.lit(None))
         )
+        .drop('total_vehicules')
         .with_column('updated_at', F.current_timestamp().cast('timestamp_ntz'))
     )
     n = df.count()

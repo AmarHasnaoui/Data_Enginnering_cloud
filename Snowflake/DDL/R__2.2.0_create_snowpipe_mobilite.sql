@@ -24,12 +24,14 @@ FILE_FORMAT = (FORMAT_NAME = BRONZE.MOBILITE.my_csv_format)
 ON_ERROR    = 'CONTINUE';
 
 -- Snowpipe trafic routier (CSV)
-CREATE PIPE IF NOT EXISTS PIPE_TRAFIC_ROUTIER
+-- CREATE OR REPLACE (et non IF NOT EXISTS) pour que la correction du mapping
+-- q/k soit bien appliquee au redeploiement sur un pipe deja existant.
+CREATE OR REPLACE PIPE PIPE_TRAFIC_ROUTIER
   AUTO_INGEST = TRUE
 AS
 COPY INTO BRONZE.MOBILITE.RAW_TRAFIC_ROUTIER
 (
-    iu_ac, libelle, t_1h, k, q, etat_trafic, iu_nd_amont, libelle_nd_amont,
+    iu_ac, libelle, t_1h, q, k, etat_trafic, iu_nd_amont, libelle_nd_amont,
     iu_nd_aval, libelle_nd_aval, etat_barre, date_debut, date_fin,
     geo_point_2d, geo_shape, _file_name
 )
