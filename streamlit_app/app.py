@@ -89,7 +89,7 @@ with tab_overview:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("NO2 moyen (derniere date)", f"{latest.get('no2_moyen', 0):.1f} ug/m3")
         c2.metric("Debit routier moyen", f"{latest.get('debit_routier_moyen', 0):.1f}")
-        c3.metric("Total velos", f"{int(latest.get('total_velos') or 0):,}")
+        c3.metric("Passages velo (total/jour)", f"{int(latest.get('total_velos') or 0):,}")
         c4.metric("Stations en alerte", int(latest.get("nb_stations_alerte") or 0))
 
         st.divider()
@@ -100,8 +100,14 @@ with tab_overview:
             st.line_chart(kpi.set_index("date_jour")[poll_cols])
         with col2:
             st.caption("Mobilite")
-            mob_cols = [c for c in ["total_velos", "debit_routier_moyen"] if c in kpi.columns]
-            st.line_chart(kpi.set_index("date_jour")[mob_cols])
+            # Deux axes separes : total_velos est une SOMME (~250k passages),
+            # debit_routier_moyen une MOYENNE (~centaines) -> incomparables sur un meme axe.
+            if "total_velos" in kpi.columns:
+                st.caption("Passages velo (total/jour)")
+                st.line_chart(kpi.set_index("date_jour")[["total_velos"]])
+            if "debit_routier_moyen" in kpi.columns:
+                st.caption("Debit routier moyen (veh/h par arc)")
+                st.line_chart(kpi.set_index("date_jour")[["debit_routier_moyen"]])
 
 
 # ─────────────────────────────────────────────────────────

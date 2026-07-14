@@ -31,4 +31,4 @@ models:
           - not_null
     tests:
       - unique:
-          column_name: "(arc_id || '|' || date_jour)"
+          column_name: "(arc_id || '|' || date_jour || '|' || latitude || '|' || longitude)"

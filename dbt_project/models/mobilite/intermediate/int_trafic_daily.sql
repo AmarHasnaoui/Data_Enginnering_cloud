@@ -10,6 +10,7 @@ SELECT
     longitude,
     AVG(debit_horaire)                                              AS debit_moyen,
     MAX(debit_horaire)                                              AS debit_max,
+    SUM(debit_horaire)                                              AS total_vehicules_jour,
     AVG(taux_occupation)                                            AS taux_occupation_moyen,
     SUM(CASE WHEN etat_trafic = 'Bloqué'    THEN 1 ELSE 0 END)    AS nb_heures_bloque,
     SUM(CASE WHEN etat_trafic = 'Saturé'    THEN 1 ELSE 0 END)    AS nb_heures_sature,
